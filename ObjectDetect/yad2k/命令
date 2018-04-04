@@ -1,0 +1,6 @@
+# yolo coco
+./mtest_yolo.py -c model_data/coco_chinese_classes.txt -a model_data/yolo_anchors.txt model_data/yolo.h5
+
+# yolo9000
+./mtest_yolo.py -c model_data/9k_zh_cn.names -a model_data/yolo9000_anchors.txt model_data/yolo9000.h5 -s 0.15 -iou 0.4
+

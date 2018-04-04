@@ -1,0 +1,17 @@
+README.md
+setup.py
+SeetaFaceEngine/Release/libseeta_fa_lib.so
+SeetaFaceEngine/Release/libseeta_fd_lib.so
+SeetaFaceEngine/Release/libseeta_fi_lib.so
+pyseeta/__init__.py
+pyseeta/aligner.py
+pyseeta/common.py
+pyseeta/config.py
+pyseeta/detector.py
+pyseeta/identifier.py
+pyseeta/model_zoo.py
+pyseeta.egg-info/PKG-INFO
+pyseeta.egg-info/SOURCES.txt
+pyseeta.egg-info/dependency_links.txt
+pyseeta.egg-info/requires.txt
+pyseeta.egg-info/top_level.txt

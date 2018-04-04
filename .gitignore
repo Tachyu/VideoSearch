@@ -1,0 +1,15 @@
+*.png
+*.jpg
+*.mp4
+*.h5
+*.weight
+*.weights
+ObjectDetect/yad2k/weight/
+Data/
+Scene/2017.csv
+Scene/Videos/
+Scene/jt/
+*.pyc
+*.data
+
+
