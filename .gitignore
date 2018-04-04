@@ -11,5 +11,7 @@ Scene/Videos/
 Scene/jt/
 *.pyc
 *.data
+*.npy
+*.csv
 
 
