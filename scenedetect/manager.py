@@ -33,7 +33,8 @@ from __future__ import print_function
 import csv
 
 import scenedetect.detectors
-
+from queue import Queue
+from threading import Lock
 
 class SceneManager(object):
 
@@ -45,6 +46,7 @@ class SceneManager(object):
     #       to invoke the new constructor.
 
     #def __init__(self, args, scene_detectors):
+    # 增加队列，支持异步流水线处理（讲处理得到的图片加入队列）增加同步机制(锁)
     def __init__(self, args = None, detector = None,
                  stats_writer = None, downscale_factor = 1, frame_skip = 0,
                  save_images = False, start_time = 0, end_time =  0,
@@ -52,30 +54,39 @@ class SceneManager(object):
                  save_image_prefix = '',
                  save_csv_filename = ''):
 
-        self.scene_list = list()
-        self.args = args
-        self.detector = detector
-        self.cap = None
-        self.perf_update_rate = perf_update_rate
+        self.scene_list         = list()
+        self.args               = args
+        self.detector           = detector
+        self.cap                = None
+        self.perf_update_rate   = perf_update_rate
 
-        self.stats_writer = stats_writer
-        self.downscale_factor = downscale_factor
-        self.frame_skip = frame_skip
-        self.save_images = save_images
-        self.timecode_list = [start_time, end_time, duration]
-        self.quiet_mode = False
+        self.stats_writer       = stats_writer
+        self.downscale_factor   = downscale_factor
+        self.frame_skip         = frame_skip
+        self.save_images        = save_images
+        self.timecode_list      = [start_time, end_time, duration]
+        self.quiet_mode         = False
 
-        ###### Sat Mar 31 10:17:38 CST 2018
-        self.save_image_prefix = save_image_prefix
-        self.save_csv_filename = save_csv_filename
+        ###### Sat Mar 31 10:     17: 38 CST 2018
+        self.save_image_prefix  = save_image_prefix
+        self.save_csv_filename  = save_csv_filename
         
-        if self.args is not None:
+        if self.args is not None: 
             self._parse_args()
+
+        # 截图队列
+        self.pic_queue          = Queue()
+
+        # 当开始处理时，获得锁，直到处理结束
+        self.pic_queue_lock     = Lock()
+        self.pic_queue_lock.acquire()
 
         # The detector is stored in a list, to support the ability of combining
         # detection algorithms/classes in the future.
         self.detector_list = [ self.detector ]
 
+    def getQueueAndLock(self):
+        return self.pic_queue, self.pic_queue_lock
 
     def _parse_args(self):
         """ Parses a command-line vector (from argparse) into the appropriate

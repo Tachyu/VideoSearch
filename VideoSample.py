@@ -5,7 +5,9 @@ from __future__ import print_function
 import scenedetect as scenedetect
 import scenedetect.detectors as detectors
 import scenedetect.manager as manager
-
+import threading
+import queue
+import time
 import configparser
 
 class VideoSample:
@@ -41,14 +43,19 @@ class VideoSample:
             self.frame_skip       = frame_skip
             self.downscale_factor = downscale_factor
             self.save_images      = save_images
+    
+    def __detect_thread(self):
+        scenedetect.detect_scenes_file(self.videoname, self.smgr)
 
     def sample(self, videoname):
         """对视频进行取样并返回场景信息
+            对返回值进行修改
         
         Arguments:
             videoname {string} -- 视频文件名
         """
-        smgr = manager.SceneManager(
+        self.videoname = videoname
+        self.smgr = manager.SceneManager(
         detector          = self.content_detector, 
         frame_skip        = self.frame_skip, 
         downscale_factor  = self.downscale_factor, 
@@ -56,13 +63,44 @@ class VideoSample:
         save_csv_filename = "tmp.csv", 
         save_image_prefix = 'tmp', 
         perf_update_rate  = 1)
-        scenedetect.detect_scenes_file(videoname, smgr)
-        return smgr.scene_list
+
+        # 新线程进行检测，直接返回产生场景数据的队列和锁
+        threading.Thread(target=self.__detect_thread).start()
+        pic_queue, pic_queue_lock = self.smgr.getQueueAndLock()
+        return pic_queue, pic_queue_lock
 
 
 if __name__ == "__main__":
     vname     = "Data/Videos/demo.mp4"
     vsample   = VideoSample(useconfig = True)
-    scenelist = vsample.sample(vname)
-    print("Detected %d scenes in video" % (len(scenelist)))
-    print(scenelist)
+    sceneQ, QLock = vsample.sample(vname)
+
+    isSceneProcessOver = False
+    # 跳出循环条件：处理结束且队列为空
+    while not sceneQ.empty() or not isSceneProcessOver:
+        # 非阻塞
+        try:
+            sceneitem = sceneQ.get(False)['id']
+            print(sceneitem)
+            print()
+        except queue.Empty:
+            if isSceneProcessOver:
+                break
+            else:
+                time.sleep(0.1)
+                
+        
+        # 处理结束
+        if QLock.acquire(False):
+            isSceneProcessOver = True
+
+        # # 阻塞, 会死锁，已弃用
+        # if not isSceneProcessOver:
+        #     sceneitem = sceneQ.get()['id']
+        #     print(sceneitem)
+        # # 处理结束
+        # if QLock.acquire(False):
+        #     isSceneProcessOver = True
+
+    # print("Detected %d scenes in video" % (len(scenelist)))
+    # print(scenelist)

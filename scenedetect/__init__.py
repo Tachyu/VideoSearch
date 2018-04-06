@@ -104,6 +104,8 @@ def detect_scenes_file(path,scene_manager):
     if not cap.isOpened():
         if not scene_manager.quiet_mode:
             print('[PySceneDetect] FATAL ERROR - could not open video %s.' % path)
+        # 出现错误时释放锁
+        scene_manager.pic_queue_lock.release()
         return (video_fps, frames_read)
     elif not scene_manager.quiet_mode:
         print('[PySceneDetect] Parsing video %s...' % file_name)
@@ -133,6 +135,9 @@ def detect_scenes_file(path,scene_manager):
     # Perform scene detection on cap object (modifies scene_list).
     frames_read, frames_processed = detect_scenes(
         cap, scene_manager, start_frame, end_frame, duration_frames, file_name)
+    # 释放锁
+    scene_manager.pic_queue_lock.release()
+    # time.sleep(1)
     time_end = time.time()
     print('detect_scenes_file time = ' + str(time_end - time_start))
     # Cleanup and return number of frames we read/processed.
@@ -166,6 +171,7 @@ def detect_scenes(cap, scene_manager, start_frame,
         Tuple of integers of number of frames read, and number of frames
         actually processed/used for scene detection.
     """
+
     frames_read = 0
     frames_processed = 0
     frame_metrics = {}
@@ -258,18 +264,33 @@ def detect_scenes(cap, scene_manager, start_frame,
                 print("[PySceneDetect] Current Processing Speed: %5.1f FPS" % perf_curr_rate)
 
         # save images on scene cuts/breaks if requested (scaled if using -df)
-        if scene_manager.save_images:
-            if not os.path.exists(scene_manager.save_image_prefix):
-                os.mkdir(scene_manager.save_image_prefix)
-                print('mkdir ' + scene_manager.save_image_prefix)
-            if scene_manager.save_image_prefix != '':
-                cur_image_path_prefix = os.path.join(scene_manager.save_image_prefix,image_path_prefix)
-            # print(cur_image_path_prefix)
+        if cut_found: 
+            num_scenes = len(scene_manager.scene_list)
+            if scene_manager.save_images:
+                if not os.path.exists(scene_manager.save_image_prefix):
+                    os.mkdir(scene_manager.save_image_prefix)
+                    print('mkdir ' + scene_manager.save_image_prefix)
+                if scene_manager.save_image_prefix != '':
+                    cur_image_path_prefix = os.path.join(scene_manager.save_image_prefix,image_path_prefix)
+                # print(cur_image_path_prefix)
 
-            if cut_found:
                 save_preview_images(
-                    cur_image_path_prefix, im_cap, last_frame, len(scene_manager.scene_list))
+                    cur_image_path_prefix, im_cap, last_frame, num_scenes)
+            # 将图片加入队列, 并加上描述（文件名）
+            
+            pic_out_dict = {}
+            pic_out_dict['isIN'] = False
+            pic_out_dict['id'] = num_scenes   
+            pic_out_dict['data'] = last_frame
 
+            pic_in_dict = {}
+            pic_in_dict['isIN'] = True
+            pic_in_dict['id'] = num_scenes + 1  
+            pic_in_dict['data'] = im_cap
+
+            scene_manager.pic_queue.put(pic_out_dict)
+            scene_manager.pic_queue.put(pic_in_dict)
+            
             del last_frame
             last_frame = im_cap.copy()
     #while over
