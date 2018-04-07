@@ -20,7 +20,8 @@ class VideoSample:
         threshold        = 30, 
         frame_skip       = 0, 
         downscale_factor = 50, 
-        save_images      = True):
+        save_images      = True,
+        isShow           = False): 
         """初始化
         
         Keyword Arguments:
@@ -30,6 +31,7 @@ class VideoSample:
             downscale_factor {int} -- 压缩率 (default: {50})
             save_images {bool} -- 是否存储采样图片 (default: {True})
         """
+        self.isShow = isShow
         self.content_detector = detectors.ContentDetector(threshold = threshold)        
         if useconfig:
             conf                  = configparser.ConfigParser()
@@ -55,24 +57,29 @@ class VideoSample:
             videoname {string} -- 视频文件名
         """
         self.videoname = videoname
+        if self.isShow:
+            perf_update_rate = 1
+        else:
+            perf_update_rate = -1
         self.smgr = manager.SceneManager(
         detector          = self.content_detector, 
         frame_skip        = self.frame_skip, 
         downscale_factor  = self.downscale_factor, 
         save_images       = self.save_images, 
         save_csv_filename = "tmp.csv", 
-        save_image_prefix = 'tmp', 
-        perf_update_rate  = 1)
+        save_image_prefix = 'tmp',
+        quiet_mode = not self.isShow, 
+        perf_update_rate  = perf_update_rate)
 
         # 新线程进行检测，直接返回产生场景数据的队列和锁
-        threading.Thread(target=self.__detect_thread).start()
+        threading.Thread(target   = self.__detect_thread).start()
         pic_queue, pic_queue_lock = self.smgr.getQueueAndLock()
         return pic_queue, pic_queue_lock
 
 
 if __name__ == "__main__":
-    vname     = "Data/Videos/demo.mp4"
-    vsample   = VideoSample(useconfig = True)
+    vname         = "Data/Videos/demo.mp4"
+    vsample       = VideoSample(useconfig = True, isShow = False)
     sceneQ, QLock = vsample.sample(vname)
 
     isSceneProcessOver = False
@@ -81,8 +88,6 @@ if __name__ == "__main__":
         # 非阻塞
         try:
             sceneitem = sceneQ.get(False)['id']
-            print(sceneitem)
-            print()
         except queue.Empty:
             if isSceneProcessOver:
                 break

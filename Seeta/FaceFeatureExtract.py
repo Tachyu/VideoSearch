@@ -4,7 +4,14 @@ from pyseeta import Identifier
 import os
 import logging
 import uuid
+    """
+        人脸识别类
+            Recognation(img)
+            识别图片中的人脸，记录人脸位置，记录特征,给每一张脸一个uuid
 
+            RecordFaceToDB(faceid, person_name)
+            数据库中建立部分脸id与人名的映射
+    """
 try:
     from PIL import Image, ImageDraw
     import numpy as np

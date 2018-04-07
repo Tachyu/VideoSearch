@@ -65,7 +65,7 @@ class SceneManager(object):
         self.frame_skip         = frame_skip
         self.save_images        = save_images
         self.timecode_list      = [start_time, end_time, duration]
-        self.quiet_mode         = False
+        self.quiet_mode         = quiet_mode
 
         ###### Sat Mar 31 10:     17: 38 CST 2018
         self.save_image_prefix  = save_image_prefix
