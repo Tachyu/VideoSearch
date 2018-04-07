@@ -8,6 +8,7 @@ import scenedetect.manager as manager
 import threading
 import queue
 import time
+import os
 import configparser
 
 class VideoSample:
@@ -78,16 +79,16 @@ class VideoSample:
 
 
 if __name__ == "__main__":
-    vname         = "Data/Videos/demo.mp4"
-    vsample       = VideoSample(useconfig = True, isShow = False)
+    vname         = "Data/Videos/20170701_tiny.mp4"
+    vsample       = VideoSample(useconfig = True, isShow = True)
     sceneQ, QLock = vsample.sample(vname)
-
     isSceneProcessOver = False
     # 跳出循环条件：处理结束且队列为空
     while not sceneQ.empty() or not isSceneProcessOver:
         # 非阻塞
         try:
-            sceneitem = sceneQ.get(False)['id']
+            sceneitem = sceneQ.get(False)
+            # print(sceneitem)
         except queue.Empty:
             if isSceneProcessOver:
                 break

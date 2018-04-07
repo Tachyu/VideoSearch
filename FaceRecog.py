@@ -1,12 +1,18 @@
-from pyseeta import Detector
-from pyseeta import Aligner
-from pyseeta import Identifier
+# from pyseeta import Detector
+# from pyseeta import Aligner
+# from pyseeta import Identifier
+from Seeta.pyseeta.detector import Detector
+from Seeta.pyseeta.aligner import Aligner
+from Seeta.pyseeta.identifier import Identifier
 import os
 import logging
 import uuid
 import configparser
 import queue
 import threading
+import time
+import copy
+import cv2
 
 try:
     from PIL import Image, ImageDraw
@@ -48,10 +54,12 @@ class FaceRecog():
         self.aligner = Aligner()
         self.identifier = Identifier()
         thresh = threshold
+
         if useconfig:
             config = configparser.ConfigParser()
-            config.read('Conf/config.ini')
-            thresh = config.getint('face','threshold')
+
+            config.read('Config/config.ini')
+            thresh = config.getint('sample','threshold')
         
         self.detector.set_min_face_size(thresh)
 
@@ -90,6 +98,7 @@ class FaceRecog():
         # 跳出循环条件：处理结束且队列为空
         while not self.input_Queue.empty() or not isSceneProcessOver:
             # 非阻塞
+            sceneitem = None
             try:
                 '''
                     pic_out_dict['isIN'] = False
@@ -103,16 +112,18 @@ class FaceRecog():
                 else:
                     time.sleep(0.1)
             # 处理   
-            if sceneitem['isIN']:
-                name = str(sceneitem['id']) + "_IN_"
-            else:
-                name = str(sceneitem['id']) + "_OUT"
-            sceneitem['name'] = name
-            result = self.__Recognation(name, sceneitem['data'])
-           
-            # 加入处理结果队列
-            sceneitem['face_result'] = result
-            self.output_queue.put(sceneitem)
+            if sceneitem != None:
+                if sceneitem['isIN']:
+                    name = str(sceneitem['id']) + "_IN_"
+                else:
+                    name = str(sceneitem['id']) + "_OUT"
+                sceneitem['name'] = name
+                # print(sceneitem)
+                result = self.__Recognation(name, sceneitem['data'])
+            
+                # 加入处理结果队列
+                sceneitem['face_result'] = result
+                self.output_queue.put(sceneitem)
 
             # 处理结束
             if self.input_over_lock.acquire(False):
@@ -121,12 +132,11 @@ class FaceRecog():
         self.out_over_lock.release()
 
     def __Recognation(self, name, img):
-        # 处理图片(cv格式), 返回feature和landmark信息
-        image = img.convert('RGB')
+        # 处理图片, 返回feature和landmark信息
+        image = Image.fromarray(cv2.cvtColor(img,cv2.COLOR_BGR2RGB))
         lands, faces, feats = self.__extract_features(image) 
-        logging.info("detecting %s: find %d faces"%(name, len(lands))) 
         if self.isShow:
-            image = Image.fromarray(cv2.cvtColor(img,cv2.COLOR_BGR2RGB))  
+            logging.info("detecting %s: find %d faces"%(name, len(lands))) 
             draw = ImageDraw.Draw(image)
             for i, face in enumerate(faces):
                 draw.rectangle([face.left, face.top, face.right, face.bottom], outline='red') 
@@ -189,11 +199,30 @@ class FaceRecog():
         self.identifier.release()
     
 if __name__ == '__main__':
-    recog = FaceRecog(isShow=True)
-    recog.StartRecongThread(img_queue, over_lock):
-    
-    dic_list = extractor.detect()
-    extractor.release()
+    from VideoSample import VideoSample
+    vname         = "Data/Videos/20170701_tiny.mp4"
+    vsample       = VideoSample(useconfig = True, isShow = True)
+    sceneQ, QLock = vsample.sample(vname)
 
-
+    s_time = time.time()
+    recog = FaceRecog(isShow=False)
+    output_queue, out_over_lock = recog.getOutputQueueAndLock()
+    recog.StartRecongThread(sceneQ, QLock)
+    isProcessOver = False
+    # 跳出循环条件：处理结束且队列为空
+    while not output_queue.empty() or not isProcessOver:
+        # 非阻塞
+        try:
+            sceneitem = output_queue.get(False)
+            # print(sceneitem)
+        except queue.Empty:
+            if isProcessOver:
+                break
+            else:
+                time.sleep(0.1)
+        # 处理结束
+        if out_over_lock.acquire(False):
+            isProcessOver = True
+    e_time = time.time()
+    print("Face: time = "+str(e_time - s_time))
 
