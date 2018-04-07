@@ -12,7 +12,7 @@ from keras.models import load_model
 from PIL import Image, ImageDraw, ImageFont
 
 from yad2k.models.keras_yolo import yolo_eval, yolo_head
-
+import types
 parser = argparse.ArgumentParser(
     description='Run a YOLO_v2 style detection model on test images..')
 parser.add_argument(
@@ -143,12 +143,15 @@ def _main(args):
         image_data /= 255.
         image_data = np.expand_dims(image_data, 0)  # Add batch dimension.
 
+        print("image: "+str(type(image)))
+        print("image_data: "+str(type(image_data)))
+        print("image.size" + str(image.size))
+        print("image_data.size" + str(image_data.size))
         out_boxes, out_scores, out_classes = sess.run(
             [boxes, scores, classes],
             feed_dict={
                 yolo_model.input: image_data,
-                input_image_shape: [image.size[1], image.size[0]],
-                K.learning_phase(): 0
+                input_image_shape: [image.size[1], image.size[0]]
             })
         print('Found {} boxes for {}'.format(len(out_boxes), image_file))
 

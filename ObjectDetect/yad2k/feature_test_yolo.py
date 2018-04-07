@@ -204,6 +204,9 @@ def _main(args):
 
         image_data /= 255.
         image_data = np.expand_dims(image_data, 0)  # Add batch dimension.
+
+        
+        
         logging.info(image_data.shape)
 
         out_boxes, out_scores, out_classes, yolo_model_output = sess.run(
