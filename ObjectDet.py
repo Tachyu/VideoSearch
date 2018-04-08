@@ -53,7 +53,6 @@ class ObjectDet(BasicPart):
         '''
         BasicPart.__init__(self, logfile=logfile, isShow=isShow)
         self.__read_config()
-        self.__kerasinit()
 
 
     def __read_config(self):
@@ -71,7 +70,7 @@ class ObjectDet(BasicPart):
         with open(self.classes_path) as f:
             class_names = f.readlines()
         self.class_names = [c.strip() for c in class_names]
-
+        self.class_names = np.array(self.class_names)
         # Read anchor file
         with open(self.anchors_path) as f:
             self.anchors = f.readline()
@@ -98,7 +97,7 @@ class ObjectDet(BasicPart):
         self.model_image_size = self.yolo_model.layers[0].input_shape[1:3]
         
         self.is_fixed_size = self.model_image_size != (None, None)
-
+        
         if self.isShow:
             # Generate colors for drawing bounding boxes.
             hsv_tuples = [(x / len(class_names), 1., 1.)
@@ -147,12 +146,12 @@ class ObjectDet(BasicPart):
 
     def __Detection(self, name, img):
         # 处理图片, 返回feature和tag信息
-        logging.info("__Detection__Detection__Detection__Detection__Detection__Detection")
+        # logging.info("__Detection__Detection__Detection__Detection__Detection__Detection")
         image, image_data = self.__PreProcess(img)
-        print("image: "+str(type(image)))
-        print("image_data: "+str(type(image_data)))
-        print("image.size" + str(image.size))
-        print("image_data.size" + str(image_data.size))
+        # print("image: "+str(type(image)))
+        # print("image_data: "+str(type(image_data)))
+        # print("image.size" + str(image.size))
+        # print("image_data.size" + str(image_data.size))
         
         sess = K.get_session()
         out_boxes, \
@@ -165,12 +164,17 @@ class ObjectDet(BasicPart):
             self.input_image_shape: [image.size[1], image.size[0]],
             K.learning_phase(): 0
         })
-        image_tag_name           = np.choose(out_classes, self.class_names)
 
+        out_classes = np.array(out_classes)
+
+        image_tag_name = set([self.class_names[i] for i in out_classes])
+        print(image_tag_name)
         image_obj_dic            = {}
         image_obj_dic['boxes']   = out_boxes
         image_obj_dic['scores']  = out_scores
-        image_obj_dic['classes'] = image_tag_name
+        image_obj_dic['classes'] = out_classes
+        # image_obj_dic['classes'] = image_tag_name
+        
         image_obj_dic['feat']    = model_features
         if self.isShow:
             logging.info('Found {} boxes for {}'.format(len(out_boxes), name))
@@ -178,11 +182,9 @@ class ObjectDet(BasicPart):
                     font=self.font,
                     size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
             thickness = (image.size[0] + image.size[1]) // 300
-            
-            true_images_classes.append(out_classes)
 
             for i, c in reversed(list(enumerate(out_classes))):
-                predicted_class = class_names[c]
+                predicted_class = self.class_names[c]
                 box             = out_boxes[i]
                 score           = out_scores[i]
 
@@ -196,7 +198,7 @@ class ObjectDet(BasicPart):
                 left                     = max(0, np.floor(left + 0.5).astype('int32'))
                 bottom                   = min(image.size[1], np.floor(bottom + 0.5).astype('int32'))
                 right                    = min(image.size[0], np.floor(right + 0.5).astype('int32'))
-                print(label, (left, top), (right, bottom))
+                # print(label, (left, top), (right, bottom))
 
                 if top - label_size[1] >= 0:
                     text_origin = np.array([left, top - label_size[1]])
@@ -213,31 +215,31 @@ class ObjectDet(BasicPart):
                     fill=self.colors[c])
                 draw.text(text_origin, label, fill=(0, 0, 0), font=font)
                 del draw
-
+            image.show()
         return image_obj_dic
 
     def __process(self, item):
-        
-        
-        if 'name' not in item.keys():
-            if item['isIN']:
-                name = str(item['id']) + "_IN_"
-            else:
-                name = str(item['id']) + "_OUT"
-            item['name'] = name
-        
-        result = self.__Detection(item['name'], item['data'])
-        # 加入处理结果队列
-        item['image_obj_dic'] = image_obj_dic
-        self.output_queue.put(item)
-        
+        if item != None:
+            if 'name' not in item.keys():
+                if item['isIN']:
+                    name = str(item['id']) + "_IN_"
+                else:
+                    name = str(item['id']) + "_OUT"
+                item['name'] = name
+            
+            image_obj_dic = self.__Detection(item['name'], item['data'])
+            # 加入处理结果队列
+            item['image_obj_dic'] = image_obj_dic
+            self.output_queue.put(item)
+            
     def startThread(self, input_queue, input_lock):
-        logging.info('startThread startThread startThread startThread')
+        # logging.info('startThread startThread startThread startThread')
         self.input_Queue = input_queue
         self.input_over_lock = input_lock
         threading.Thread(target=self.__process_thread).start()
 
     def __process_thread(self):
+        self.__kerasinit()        
         isProcessOver = False
         # 跳出循环条件：处理结束且队列为空
         while not self.input_Queue.empty() or not isProcessOver:
@@ -268,11 +270,13 @@ class ObjectDet(BasicPart):
 if __name__ == '__main__':
     from VideoSample import VideoSample
     vname         = "Data/Videos/20170701_small.mp4"
-    vsample       = VideoSample(isShow = True)
+    vname         = "Data/Videos/20170701.mp4"
+    
+    vsample       = VideoSample(isShow = False)
     sceneQ, QLock = vsample.sample(vname)
 
     s_time = time.time()
-    od = ObjectDet(isShow=False)
+    od = ObjectDet(isShow=True)
     output_queue, out_over_lock = od.getOutputQueueAndLock()
     od.startThread(sceneQ, QLock)
     isProcessOver = False
@@ -281,8 +285,8 @@ if __name__ == '__main__':
         # 非阻塞
         try:
             sceneitem = output_queue.get(False)
-            print(sceneitem['image_obj_dic']['classes'])
-            print(sceneitem['name'])
+            # print(sceneitem['image_obj_dic']['classes'])
+            # print(sceneitem['name'])
             
         except queue.Empty:
             if isProcessOver:

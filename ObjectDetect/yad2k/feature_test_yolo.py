@@ -87,8 +87,8 @@ def save_tag(image_names, tag_output_path, image_classes, all_classes):
     images_dic_list = []
     image_classes = np.array(image_classes)
     all_classes = np.array(all_classes)
-    print(image_classes.shape)
-    print(all_classes.shape)
+    logging.info("image_classes: " + str(image_classes.shape))
+    logging.info("all_classes: " + str(all_classes.shape))
     
     for index, image in enumerate(image_names): 
         image_dic = {}
