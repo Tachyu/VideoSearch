@@ -299,7 +299,7 @@ def detect_scenes(cap, scene_manager, start_frame,
                 
 
             
-            # del last_frame
+            del last_frame
             last_frame = im_cap.copy()
     #while over
     # print('process_frame time = ' + str(t))

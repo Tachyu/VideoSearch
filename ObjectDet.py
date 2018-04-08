@@ -216,6 +216,8 @@ class ObjectDet(BasicPart):
                 draw.text(text_origin, label, fill=(0, 0, 0), font=font)
                 del draw
             image.show()
+            time.sleep(0.7)
+            image.close()
         return image_obj_dic
 
     def __process(self, item):
@@ -270,7 +272,7 @@ class ObjectDet(BasicPart):
 if __name__ == '__main__':
     from VideoSample import VideoSample
     vname         = "Data/Videos/20170701_small.mp4"
-    vname         = "Data/Videos/20170701.mp4"
+    # vname         = "Data/Videos/20170701.mp4"
     
     vsample       = VideoSample(isShow = False)
     sceneQ, QLock = vsample.sample(vname)

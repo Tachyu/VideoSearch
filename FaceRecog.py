@@ -141,7 +141,20 @@ class FaceRecog(BasicPart):
         self.detector.release()
         self.aligner.release()
         self.identifier.release()
-    
+
+class FaceFeatureWriter():
+    """将视频的人脸特征写入数据文件
+        格式：文件名：facefeat.npy
+             [
+            {"feat_id":xxx,
+             "feat":[1,23,...]},...]
+    """
+
+    def __init__(self):
+        pass
+
+
+
 if __name__ == '__main__':
     from VideoSample import VideoSample
     vname         = "Data/Videos/20170701_tiny.mp4"
