@@ -79,12 +79,13 @@ class DBHandler:
          float(length)])
          return scene_id
     
+    def __addmany(self, tablename, arglist):
 
-    def addmanySceneInfo(self, videoid, starttimes, lengths):
+    def addmanySceneInfo(self, videoids, starttimes, lengths):
         """批量快速添加场景信息
             返回添加的场景信息id列表
         Arguments:
-            videoid {int} -- 视频id
+            videoids {数组} -- 视频id数组
             starttimes {开始时间数组} -- list
             lengths {持续时间数组} -- list
         """
@@ -96,16 +97,13 @@ class DBHandler:
         s2_sql = 'INSERT INTO "SceneInfo" VALUES'         
         for i, st in enumerate(starttimes):
             # s2_args.append(None)
-            s2_args.append(videoid)
+            s2_args.append(videoids[i])
             s2_args.append(st)
             s2_args.append(lengths[i])
             s2_sql += ('(DEFAULT, %s, %s, %s),')
         s2_sql = s2_sql[0:len(s2_sql) - 1]
         
         self.excutesql(s2_sql, s2_args, False)
-#         INSERT INTO "SceneInfo" VALUES(DEFAULT, 47, 1, 10),(DEFAULT, 47, 2, 10
-# );
-
         s3_sql  = 'SELECT currval(%s::regclass)'
         s3_args = ['"SceneInfo_SceneId_seq"']
         currval = self.excutesql(s3_sql, s3_args)
@@ -113,34 +111,29 @@ class DBHandler:
         return list(range(nextval+1, currval+1, 1))
 
 
-    def addmanyFaceFeats(self, sceneid, feats, personids):
-                """批量快速添加人脸特征信息
+    def addmanyFaceFeats(self, sceneids, personids):
+        """批量快速添加人脸特征信息
             返回添加的人脸特征信息id列表
         Arguments:
-            sceneid {int} -- 场景id
-            starttimes {开始时间数组} -- list
-            lengths {持续时间数组} -- list
+            sceneids  {int} --  场景id列表
+            personids {int} --人物id列表
         """
         s1_sql  = 'SELECT nextval(%s::regclass)'
-        s1_args = ['"SceneInfo_SceneId_seq"']
+        s1_args = ['"FaceInfo_FaceFeatId_seq"']
         nextval = self.excutesql(s1_sql, s1_args)
 
         s2_args = []
-        s2_sql = 'INSERT INTO "SceneInfo" VALUES'         
-        for i, st in enumerate(starttimes):
-            # s2_args.append(None)
-            s2_args.append(videoid)
-            s2_args.append(st)
-            s2_args.append(lengths[i])
-            s2_sql += ('(DEFAULT, %s, %s, %s),')
+        s2_sql = 'INSERT INTO "FaceInfo" VALUES'         
+        for i, sd in enumerate(sceneids):
+            s2_args.append(sd)
+            s2_args.append(personids[i])
+            s2_sql += ('(DEFAULT, %s, %s),')
         s2_sql = s2_sql[0:len(s2_sql) - 1]
-        
         self.excutesql(s2_sql, s2_args, False)
 
         s3_sql  = 'SELECT currval(%s::regclass)'
-        s3_args = ['"SceneInfo_SceneId_seq"']
+        s3_args = ['"FaceInfo_FaceFeatId_seq"']
         currval = self.excutesql(s3_sql, s3_args)
-
         return list(range(nextval+1, currval+1, 1))
 
     def commit(self):
@@ -171,6 +164,7 @@ if __name__ == "__main__":
     handler = DBHandler()
     # handler.addVideoInfo("Data/Videos/demo.mp4", "Python Test")    
     # handler.addSceneInfo(47, 0.0, 1.0)   
-    result = handler.addmanySceneInfo(47, [1,2,3],[4,5,6])   
+    # result = handler.addmanySceneInfo(47, [1,2,3],[4,5,6])  
+    result = handler.addmanyFaceFeats([37,37,37],[1,1,1])        
     print(result)
     infos  = handler.commit()
