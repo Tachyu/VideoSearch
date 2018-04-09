@@ -39,7 +39,7 @@ class DBHandler:
             print('filename: %s not found.'%videoname)
         else:
             duration = self.__getSeconds(videoname)
-            video_id = self.calldbproc([
+            video_id = self.__calldbproc([
             '"public"."AddVideo"',
              str(videoname), 
              float(duration), 
@@ -47,7 +47,7 @@ class DBHandler:
              str(descrip)])
         return video_id
     
-    def calldbproc(self, args):
+    def __calldbproc(self, args):
         cursor = self.connection.cursor()                    
         cursor.callproc(args[0],args[1:])
         newid  = None            
@@ -55,7 +55,7 @@ class DBHandler:
             newid = re[0]
         return newid
 
-    def excutesql(self, sql, args, isFetch=True):
+    def __excutesql(self, sql, args, isFetch=True):
         cursor = self.connection.cursor()                    
         cursor.execute(sql, args)
         newid  = None       
@@ -72,14 +72,38 @@ class DBHandler:
              starttime {开始时间} -- float秒
              length {持续时间} -- float秒
          """
-         scene_id = self.calldbproc([
+         scene_id = self.__calldbproc([
         '"public"."AddScene"',
          int(videoid),
          float(starttime),
          float(length)])
          return scene_id
     
-    def __addmany(self, tablename, arglist):
+    def __addmany(self, tablename, idname, arglists):
+        s1_sql  = 'SELECT nextval(%s::regclass)'
+        s1_args = ['"%s_%s_seq"'%(tablename, idname)]
+        nextval = self.__excutesql(s1_sql, s1_args)
+        # print(nextval)
+        s2_args = []
+        size    = len(arglists[0])
+        s2_sql = 'INSERT INTO "%s" VALUES'%tablename         
+        for i in range(size):
+            s2_sql += '(DEFAULT,'
+            # s2_args.append(nextval + i)
+            for lis in arglists:
+                s2_args.append(lis[i])
+                s2_sql += ('%s,')
+            # s2_sql += ('(DEFAULT, %s, %s, %s),')
+            s2_sql = s2_sql[0:len(s2_sql) - 1]
+            s2_sql += '),'
+        s2_sql = s2_sql[0:len(s2_sql) - 1]
+        self.__excutesql(s2_sql, s2_args, False)
+
+        s3_sql  = 'SELECT currval(%s::regclass)'
+        s3_args = ['"%s_%s_seq"'%(tablename, idname)]
+        currval = self.__excutesql(s3_sql, s3_args)
+
+        return list(range(nextval+1, currval+1, 1))
 
     def addmanySceneInfo(self, videoids, starttimes, lengths):
         """批量快速添加场景信息
@@ -89,26 +113,7 @@ class DBHandler:
             starttimes {开始时间数组} -- list
             lengths {持续时间数组} -- list
         """
-        s1_sql  = 'SELECT nextval(%s::regclass)'
-        s1_args = ['"SceneInfo_SceneId_seq"']
-        nextval = self.excutesql(s1_sql, s1_args)
-
-        s2_args = []
-        s2_sql = 'INSERT INTO "SceneInfo" VALUES'         
-        for i, st in enumerate(starttimes):
-            # s2_args.append(None)
-            s2_args.append(videoids[i])
-            s2_args.append(st)
-            s2_args.append(lengths[i])
-            s2_sql += ('(DEFAULT, %s, %s, %s),')
-        s2_sql = s2_sql[0:len(s2_sql) - 1]
-
-        self.excutesql(s2_sql, s2_args, False)
-        s3_sql  = 'SELECT currval(%s::regclass)'
-        s3_args = ['"SceneInfo_SceneId_seq"']
-        currval = self.excutesql(s3_sql, s3_args)
-
-        return list(range(nextval+1, currval+1, 1))
+        return self.__addmany('SceneInfo','SceneId',[videoids,starttimes,lengths])
 
 
     def addmanyFaceFeats(self, sceneids, personids):
@@ -118,24 +123,17 @@ class DBHandler:
             sceneids  {int} --  场景id列表
             personids {int} --人物id列表
         """
-        s1_sql  = 'SELECT nextval(%s::regclass)'
-        s1_args = ['"FaceInfo_FaceFeatId_seq"']
-        nextval = self.excutesql(s1_sql, s1_args)
+        return self.__addmany('FaceInfo','FaceFeatId',[sceneids, personids])
 
-        s2_args = []
-        s2_sql = 'INSERT INTO "FaceInfo" VALUES'         
-        for i, sd in enumerate(sceneids):
-            s2_args.append(sd)
-            s2_args.append(personids[i])
-            s2_sql += ('(DEFAULT, %s, %s),')
-        s2_sql = s2_sql[0:len(s2_sql) - 1]
-        self.excutesql(s2_sql, s2_args, False)
-
-        s3_sql  = 'SELECT currval(%s::regclass)'
-        s3_args = ['"FaceInfo_FaceFeatId_seq"']
-        currval = self.excutesql(s3_sql, s3_args)
-        return list(range(nextval+1, currval+1, 1))
-
+    def addmanyPicFeats(self, sceneids):
+        """批量快速添加图像特征信息
+            返回添加的图像特征信息id列表
+        Arguments:
+            sceneids  {int} --  场景id列表
+        """
+        return self.__addmany('PicInfo','PicFeatId',[sceneids])
+        
+        
     def commit(self):
         """将视频信息提交数据库
         """
@@ -164,7 +162,8 @@ if __name__ == "__main__":
     handler = DBHandler()
     # handler.addVideoInfo("Data/Videos/demo.mp4", "Python Test")    
     # handler.addSceneInfo(47, 0.0, 1.0)   
-    # result = handler.addmanySceneInfo(47, [1,2,3],[4,5,6])  
-    result = handler.addmanyFaceFeats([37,37,37],[1,1,1])        
+    # result = handler.addmanySceneInfo([47,47,47], [1,2,3],[4,5,6])  
+    result = handler.addmanyFaceFeats([37,37,37],[1,1,1])  
+    # result = handler.addmanyPicFeats([37,39,41])      
     print(result)
     infos  = handler.commit()
