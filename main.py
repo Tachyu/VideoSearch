@@ -21,6 +21,7 @@ from queue import Queue
 from ObjectDet import ObjectDet
 from FaceRecog import FaceRecog
 from DBHandler import DBHandler
+from VideoSample import VideoSample
 
 class main:
     """主入口程序
@@ -44,7 +45,7 @@ class main:
                 os.mkdir(d)
 
     def start(self):
-        vsample       = VideoSample(isShow = False)
+        vsample       = VideoSample(isShow=False)
         sceneQ, sceneLock = vsample.sample(self.videoname)
         s_time = time.time()
 
@@ -64,6 +65,7 @@ class main:
             # 非阻塞
             try:
                 sceneitem = fr_output_queue.get(False)
+                # print(sceneitem.keys())
                 # print(sceneitem['image_obj_dic']['classes'])
                 # print(sceneitem['name'])
                 
@@ -77,7 +79,7 @@ class main:
                 isProcessOver = True
         e_time = time.time()
 
-        print("OD+FR: time = "+str(e_time - s_time))
+        logging.info("OD+FR: time = "+str(e_time - s_time))
 
 if __name__ == "__main__":
     main("Data/Videos/20170701_small.mp4").start()

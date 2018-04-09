@@ -112,6 +112,7 @@ class ObjectDet(BasicPart):
 
         self.yolo_outputs = yolo_head(self.yolo_model.output, self.anchors, len(self.class_names))
         self.input_image_shape = K.placeholder(shape=(2, ))
+        
 
         
         self.boxes, self.scores, self.classes = yolo_eval(
@@ -119,6 +120,7 @@ class ObjectDet(BasicPart):
             self.input_image_shape,
             score_threshold = self.score_threshold,
             iou_threshold   = self.iou_threshold)
+        self.sess = K.get_session()        
         logging.info("KERAS INIT OVER")
 
 
@@ -153,11 +155,10 @@ class ObjectDet(BasicPart):
         # print("image.size" + str(image.size))
         # print("image_data.size" + str(image_data.size))
         
-        sess = K.get_session()
         out_boxes, \
         out_scores, \
         out_classes, \
-        model_features = sess.run(
+        model_features = self.sess.run(
         [self.boxes, self.scores, self.classes, self.yolo_model.output],
         feed_dict={
             self.yolo_model.input: image_data,
@@ -220,7 +221,7 @@ class ObjectDet(BasicPart):
             image.close()
         return image_obj_dic
 
-    def __process(self, item):
+    def process(self, item):
         if item != None:
             if 'name' not in item.keys():
                 if item['isIN']:
@@ -234,13 +235,13 @@ class ObjectDet(BasicPart):
             item['image_obj_dic'] = image_obj_dic
             self.output_queue.put(item)
             
-    def startThread(self, input_queue, input_lock):
-        # logging.info('startThread startThread startThread startThread')
-        self.input_Queue = input_queue
-        self.input_over_lock = input_lock
-        threading.Thread(target=self.__process_thread).start()
+    # def startThread(self, input_queue, input_lock):
+    #     # logging.info('startThread startThread startThread startThread')
+    #     self.input_Queue = input_queue
+    #     self.input_over_lock = input_lock
+    #     threading.Thread(target=self.__process_thread).start()
 
-    def __process_thread(self):
+    def process_thread(self):
         self.__kerasinit()        
         isProcessOver = False
         # 跳出循环条件：处理结束且队列为空
@@ -255,19 +256,20 @@ class ObjectDet(BasicPart):
                 else:
                     time.sleep(0.1)
             # 处理  
-            self.__process(item)
+            self.process(item)
 
             # 处理结束
             if self.input_over_lock.acquire(False):
                 isProcessOver = True
         # 完毕
         self.out_over_lock.release()
+        self.sess.close()        
 
     def __del__(self):
         '''
             释放资源
         '''
-        self.sess.close()
+        pass
     
 if __name__ == '__main__':
     from VideoSample import VideoSample
@@ -278,7 +280,7 @@ if __name__ == '__main__':
     sceneQ, QLock = vsample.sample(vname)
 
     s_time = time.time()
-    od = ObjectDet(isShow=True)
+    od = ObjectDet(isShow=False)
     output_queue, out_over_lock = od.getOutputQueueAndLock()
     od.startThread(sceneQ, QLock)
     isProcessOver = False

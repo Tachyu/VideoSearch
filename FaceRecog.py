@@ -44,8 +44,7 @@ class FaceRecog(BasicPart):
             
         '''
         BasicPart.__init__(self, logfile=logfile, isShow=isShow)
-        self.__read_config()
-
+        
         self.detector = Detector()
         self.aligner = Aligner()
         self.identifier = Identifier()
@@ -55,25 +54,10 @@ class FaceRecog(BasicPart):
         
         self.detector.set_min_face_size(self.thresh)
 
-    def __read_config(self):
+    def read_config(self):
         """读配置文件
         """
         self.thresh = self.config.getint('facerecog','threshold')
-
-    def __process(self, item):
-        # 重写处理方法 
-        if item != None:
-            if item['isIN']:
-                name = str(item['id']) + "_IN_"
-            else:
-                name = str(item['id']) + "_OUT"
-            item['name'] = name
-            # print(sceneitem)
-            result = self.__Recognation(name, item['data'])
-        
-            # 加入处理结果队列
-            item['face_result'] = result
-            self.output_queue.put(item)
 
     def __Recognation(self, name, img):
         # 处理图片, 返回feature和landmark信息
@@ -105,8 +89,8 @@ class FaceRecog(BasicPart):
         for pic in self.images_name:
             image = Image.open(pic).convert('RGB')
             lands, faces, feats = self.__extract_features(image) 
-            logging.info("detecting %s: find %d faces"%(pic, len(lands))) 
             if self.isShow:
+                logging.info("detecting %s: find %d faces"%(pic, len(lands)))                 
                 draw = ImageDraw.Draw(image)
                 for i, face in enumerate(faces):
                     draw.rectangle([face.left, face.top, face.right, face.bottom], outline='red') 
@@ -117,7 +101,6 @@ class FaceRecog(BasicPart):
             pic_dic['feats']     = feats
             pic_dic_list.append(pic_dic)
         return pic_dic_list
-
 
     def __extract_features(self, img):
         # detect face in image
@@ -132,6 +115,8 @@ class FaceRecog(BasicPart):
             landmarks.append(landmark)
             feat = self.identifier.extract_feature_with_crop(img, landmark)
             feats.append(feat)
+        if self.isShow:
+            logging.info(str(len(faces)))
         return landmarks, faces, feats 
     
     def __del__(self):
@@ -141,45 +126,55 @@ class FaceRecog(BasicPart):
         self.detector.release()
         self.aligner.release()
         self.identifier.release()
+   
+    def process(self, item):
+        # 重写处理方法 
+        if item != None:
+            if 'name' not in item.keys():
+                if item['isIN']:
+                    name = str(item['id']) + "_IN_"
+                else:
+                    name = str(item['id']) + "_OUT"
+                item['name'] = name
+            # print(sceneitem)
+            result = self.__Recognation(name, item['data'])
+        
+            # 加入处理结果队列
+            item['face_result'] = result
+            self.output_queue.put(item)
+        else:
+            logging.warn("FaceRecog.process: NONE!")
 
-class FaceFeatureWriter():
-    """将视频的人脸特征写入数据文件
-        格式：文件名：facefeat.npy
-             [
-            {"feat_id":xxx,
-             "feat":[1,23,...]},...]
-    """
-
-    def __init__(self):
-        pass
 
 
 
 if __name__ == '__main__':
     from VideoSample import VideoSample
-    vname         = "Data/Videos/20170701_tiny.mp4"
-    vsample       = VideoSample(useconfig = True, isShow = True)
-    sceneQ, QLock = vsample.sample(vname)
+    vname         = "Data/Videos/20170701_small.mp4"
+    vsample       = VideoSample(isShow = True)
+    sceneQ, sceneLock = vsample.sample(vname)
 
     s_time = time.time()
-    recog = FaceRecog(isShow=False)
+
+    recog = FaceRecog(isShow=True)
     output_queue, out_over_lock = recog.getOutputQueueAndLock()
-    recog.startThread(sceneQ, QLock)
-    isProcessOver = False
-    # 跳出循环条件：处理结束且队列为空
-    while not output_queue.empty() or not isProcessOver:
-        # 非阻塞
-        try:
-            sceneitem = output_queue.get(False)
-            # print(sceneitem)
-        except queue.Empty:
-            if isProcessOver:
-                break
-            else:
-                time.sleep(0.1)
-        # 处理结束
-        if out_over_lock.acquire(False):
-            isProcessOver = True
+    recog.startThread(sceneQ, sceneLock)
+    time.sleep(3)
+    # isProcessOver = False
+    # # 跳出循环条件：处理结束且队列为空
+    # while not output_queue.empty() or not isProcessOver:
+    #     # 非阻塞
+    #     try:
+    #         sceneitem = output_queue.get(False)
+    #         # print(sceneitem['id'])
+    #     except queue.Empty:
+    #         if isProcessOver:
+    #             break
+    #         else:
+    #             time.sleep(0.1)
+    #     # 处理结束
+    #     if out_over_lock.acquire(False):
+    #         isProcessOver = True
     e_time = time.time()
     print("Face: time = "+str(e_time - s_time))
 

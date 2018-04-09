@@ -14,15 +14,18 @@ class BasicPart:
         self.isShow = isShow
         self.config = configparser.ConfigParser()
         self.config.read('Config/config.ini')
+        self.read_config()
 
-        if logfile == None:
-            logging.basicConfig(level=logging.INFO, 
-            format='%(levelname)s-%(lineno)d-%(asctime)s  %(message)s',
-            filename=logfile)
+        if logfile != None:
+            logging.basicConfig(
+                level=logging.INFO, 
+                format='[%(levelname)s] %(asctime)s %(message)s',
+                filename=logfile)
         else:#print to screen
-            logging.basicConfig(level=logging.INFO, 
-            format='%(levelname)s-%(lineno)d-%(asctime)s  [%s]: %(message)s'%(self.__class__.__name__))
-
+            logging.basicConfig(
+                level=logging.INFO, 
+                format='[%(levelname)s] %(asctime)s %(message)s')
+        logging.info(self.__class__.__name__+ "\tINITING...")        
         self.output_queue  = queue.Queue()
         self.out_over_lock = threading.Lock()
         self.out_over_lock.acquire()  
@@ -31,17 +34,19 @@ class BasicPart:
         return self.output_queue, self.out_over_lock
     
     def startThread(self, input_queue, input_lock):
+        logging.info("StartThread")
         self.input_Queue = input_queue
         self.input_over_lock = input_lock
-        threading.Thread(target=self.__process_thread).start()
+        threading.Thread(target=self.process_thread).start()
     
-    def __process(self, item):
+    def process(self, item):
         pass
 
-    def __read_config(self):
+    def read_config(self):
         pass
 
-    def __process_thread(self):
+    def process_thread(self):
+        logging.info(self.__class__.__name__+ "\t__process_thread")                
         isProcessOver = False
         # 跳出循环条件：处理结束且队列为空
         while not self.input_Queue.empty() or not isProcessOver:
@@ -55,7 +60,7 @@ class BasicPart:
                 else:
                     time.sleep(0.1)
             # 处理   
-            self.__process(item)
+            self.process(item)
 
             # 处理结束
             if self.input_over_lock.acquire(False):

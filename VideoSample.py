@@ -35,7 +35,6 @@ class VideoSample(BasicPart):
             save_images {bool} -- 是否存储采样图片 (default: {True})
         """
         BasicPart.__init__(self, logfile=logfile, isShow=isShow)
-        self.__read_config()
                 
         # 若有自定义参数，则进行覆盖
         if threshold             != None: 
@@ -52,13 +51,13 @@ class VideoSample(BasicPart):
         
         self.content_detector = detectors.ContentDetector(threshold = self.threshold)        
     
-    def __read_config(self):
+    def read_config(self):
         self.threshold        = self.config.getint('sample', 'threshold')
         self.frame_skip       = self.config.getint('sample', 'frame_skip')
         self.downscale_factor = self.config.getint('sample', 'downscale_factor')
         self.save_images      = self.config.getboolean('sample', 'save_images')
 
-    def __process_thread(self):
+    def process_thread(self):
         scenedetect.detect_scenes_file(self.videoname, self.smgr)
 
     def sample(self, videoname):
@@ -84,7 +83,7 @@ class VideoSample(BasicPart):
         perf_update_rate  = perf_update_rate)
 
         # 新线程进行检测，直接返回产生场景数据的队列和锁
-        threading.Thread(target   = self.__process_thread).start()
+        threading.Thread(target   = self.process_thread).start()
         pic_queue, pic_queue_lock = self.smgr.getQueueAndLock()
         return pic_queue, pic_queue_lock
 
