@@ -267,7 +267,7 @@ class ObjectDet(BasicPart):
         '''
             释放资源
         '''
-        # self.sess.close()
+        self.sess.close()
     
 if __name__ == '__main__':
     from VideoSample import VideoSample
