@@ -102,7 +102,7 @@ class DBHandler:
             s2_args.append(lengths[i])
             s2_sql += ('(DEFAULT, %s, %s, %s),')
         s2_sql = s2_sql[0:len(s2_sql) - 1]
-        
+
         self.excutesql(s2_sql, s2_args, False)
         s3_sql  = 'SELECT currval(%s::regclass)'
         s3_args = ['"SceneInfo_SceneId_seq"']
