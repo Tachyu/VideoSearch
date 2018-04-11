@@ -12,5 +12,7 @@ Scene/jt/
 *.data
 *.npy
 *.csv
+*.ini
+Config/*
 
 
