@@ -62,9 +62,7 @@ class main(BasicPart):
         self.dir['faces_feat']   = self.config.get('datadir','faces_feat')
         self.dir['faces_sample'] = self.config.get('datadir','faces_sample')
         self.dir['objects']      = self.config.get('datadir','objects')
-
         
-
     def __mkdirs(self):
         """创建Data目录下各个目录
         """
@@ -234,7 +232,6 @@ class main(BasicPart):
         self.startThread(input_queue, input_lock)
 
         
-
 
 if __name__ == "__main__":
     # main("Data/Videos/20170701_small.mp4",isShow=False).start()
