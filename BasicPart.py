@@ -34,7 +34,7 @@ class BasicPart:
         return self.output_queue, self.out_over_lock
     
     def startThread(self, input_queue, input_lock):
-        logging.info("StartThread")
+        logging.info(self.__class__.__name__+": StartThread")
         self.input_Queue = input_queue
         self.input_over_lock = input_lock
         threading.Thread(target=self.process_thread).start()
@@ -50,10 +50,10 @@ class BasicPart:
 
     def lg(self, infomation):
         if self.isShow:
-            logging.info(infomation)
+            logging.info(self.__class__.__name__+ ": "+infomation)
 
     def process_thread(self):
-        logging.info(self.__class__.__name__+ "\t__process_thread")                
+        logging.info(self.__class__.__name__+ ": process_thread START")                
         isProcessOver = False
         # 跳出循环条件：处理结束且队列为空
         while not self.input_Queue.empty() or not isProcessOver:
@@ -75,4 +75,5 @@ class BasicPart:
                 isProcessOver = True
         # 完毕
         self.out_over_lock.release()
+        logging.info(self.__class__.__name__+ ": process_thread OVER")   
         self.after_process()

@@ -68,13 +68,12 @@ class FaceRecog(BasicPart):
         # 处理图片, 返回feature和landmark信息
         image = Image.fromarray(cv2.cvtColor(img,cv2.COLOR_BGR2RGB))
         lands, faces, feats = self.__extract_features(image) 
-        if self.isShow:
-            logging.info("detecting %s: find %d faces"%(name, len(lands))) 
-            if self.picShow:
-                draw = ImageDraw.Draw(image)
-                for i, face in enumerate(faces):
-                    draw.rectangle([face.left, face.top, face.right, face.bottom], outline='red') 
-                image.show()
+        self.lg("detecting %s: find %d faces"%(name, len(lands))) 
+        if self.picShow:
+            draw = ImageDraw.Draw(image)
+            for i, face in enumerate(faces):
+                draw.rectangle([face.left, face.top, face.right, face.bottom], outline='red') 
+            image.show()
         pic_face_dic = {}
         pic_face_dic['landmarks'] = lands
         pic_face_dic['feats']     = feats

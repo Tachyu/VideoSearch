@@ -100,8 +100,7 @@ class ObjectDet(BasicPart):
             'Mismatch between model and given anchor and class sizes. ' \
             'Specify matching anchors and classes with --anchors_path and ' \
             '--classes_path flags.'
-        if self.isShow: 
-            logging.info('{} model, anchors, and classes loaded.'.format(self.model_path))
+        self.lg('{} model, anchors, and classes loaded.'.format(self.model_path))
 
         # Check if model is fully convolutional, assuming channel last order.
         self.model_image_size = self.yolo_model.layers[0].input_shape[1:3]
@@ -131,7 +130,7 @@ class ObjectDet(BasicPart):
             score_threshold = self.score_threshold,
             iou_threshold   = self.iou_threshold)
         self.sess = K.get_session()        
-        logging.info("KERAS INIT OVER")
+        self.lg("KERAS INIT OVER")
 
 
     def __PreProcess(self, img_array_data):
@@ -189,47 +188,46 @@ class ObjectDet(BasicPart):
         # image_obj_dic['classes'] = image_tag_name
         
         image_obj_dic['feat']    = model_features
-        if self.isShow:
-            logging.info("ObjectDetect: detecting %s: find %s"%(name, str(image_tag_name)))
-            if self.picShow:
-                font = ImageFont.truetype(
-                        font=self.font,
-                        size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
-                thickness = (image.size[0] + image.size[1]) // 300
+        self.lg("detecting %s: find %s"%(name, str(image_tag_name)))
+        if self.picShow:
+            font = ImageFont.truetype(
+                    font=self.font,
+                    size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
+            thickness = (image.size[0] + image.size[1]) // 300
 
-                for i, c in reversed(list(enumerate(out_classes))):
-                    predicted_class = self.class_names[c]
-                    box             = out_boxes[i]
-                    score           = out_scores[i]
+            for i, c in reversed(list(enumerate(out_classes))):
+                predicted_class = self.class_names[c]
+                box             = out_boxes[i]
+                score           = out_scores[i]
 
-                    label           = '{} {:.2f}'.format(predicted_class, score)
+                label           = '{} {:.2f}'.format(predicted_class, score)
 
-                    draw       = ImageDraw.Draw(image)
-                    label_size = draw.textsize(label, font)
+                draw       = ImageDraw.Draw(image)
+                label_size = draw.textsize(label, font)
 
-                    top, left, bottom, right = box
-                    top                      = max(0, np.floor(top + 0.5).astype('int32'))
-                    left                     = max(0, np.floor(left + 0.5).astype('int32'))
-                    bottom                   = min(image.size[1], np.floor(bottom + 0.5).astype('int32'))
-                    right                    = min(image.size[0], np.floor(right + 0.5).astype('int32'))
-                    # print(label, (left, top), (right, bottom))
+                top, left, bottom, right = box
+                top                      = max(0, np.floor(top + 0.5).astype('int32'))
+                left                     = max(0, np.floor(left + 0.5).astype('int32'))
+                bottom                   = min(image.size[1], np.floor(bottom + 0.5).astype('int32'))
+                right                    = min(image.size[0], np.floor(right + 0.5).astype('int32'))
+                # print(label, (left, top), (right, bottom))
 
-                    if top - label_size[1] >= 0:
-                        text_origin = np.array([left, top - label_size[1]])
-                    else:
-                        text_origin = np.array([left, top + 1])
+                if top - label_size[1] >= 0:
+                    text_origin = np.array([left, top - label_size[1]])
+                else:
+                    text_origin = np.array([left, top + 1])
 
-                    # My kingdom for a good redistributable image drawing library.
-                    for i in range(thickness):
-                        draw.rectangle(
-                            [left + i, top + i, right - i, bottom - i],
-                            outline=self.colors[c])
+                # My kingdom for a good redistributable image drawing library.
+                for i in range(thickness):
                     draw.rectangle(
-                        [tuple(text_origin), tuple(text_origin + label_size)],
-                        fill=self.colors[c])
-                    draw.text(text_origin, label, fill=(0, 0, 0), font=font)
-                    del draw
-                image.show()
+                        [left + i, top + i, right - i, bottom - i],
+                        outline=self.colors[c])
+                draw.rectangle(
+                    [tuple(text_origin), tuple(text_origin + label_size)],
+                    fill=self.colors[c])
+                draw.text(text_origin, label, fill=(0, 0, 0), font=font)
+                del draw
+            image.show()
                 # time.sleep(0.7)
                 # image.close()
         return image_obj_dic

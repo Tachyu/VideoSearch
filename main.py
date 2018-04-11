@@ -95,19 +95,22 @@ class main(BasicPart):
     def process_faces_thread(self):
         # 存储与处理人脸信息的线程
         # 数据库存储， addmanyFaceFeats
+        self.lg("save_face")                
         faces_num    = 0 # 视频中全部人脸数目
         # personids 暂定为全部None
         face_feat_dic_list = []       
         for index, item in enumerate(self.item_list):
-            cur_pic_id   = sel.db_picid_list[index]
             cur_face_num   = len(item['face_result']['feats'])
+            if cur_face_num == 0:
+                continue
+            cur_pic_id   = self.db_picid_list[index]            
             cur_pic_list = [cur_pic_id] * cur_face_num
             cur_person_ids = [None] * cur_face_num              
-            # 提交数据库
+            # 提交数据库   
             cur_db_faceid = self.dbhandler.addmanyFaceFeats(cur_pic_list, cur_person_ids)
             faces_num += cur_face_num
 
-            for index, feat in item['face_result']['feats']:
+            for index, feat in enumerate(item['face_result']['feats']):
                 ff_dic = {}
                 ff_dic['ffid'] = cur_db_faceid[index]
                 ff_dic['feat'] = feat
@@ -115,7 +118,7 @@ class main(BasicPart):
                 face_feat_dic_list.append(ff_dic)
         
         # 保存特征文件
-        self.__store_feat(self.dir['face_feat'], 'ff', face_feat_dic_list)    
+        self.__store_feat(self.dir['faces_feat'], 'ff', face_feat_dic_list)    
         # 完成
         self.face_finish_lock.release()
     
@@ -123,14 +126,15 @@ class main(BasicPart):
         # 存储与处理图片特征信息的线程,
         # 第一个步骤，之后才可以存储人脸和物体
         # 数据库存储， addmanyPicFeats
+        self.lg("save_pics")                
         picfeat_dic_list = []
         pic_scene_list   = []
         pic_id_list      = []  
         pic_feat_list    = []                    
         for item in self.item_list:
-            cur_scene_id  = sel.db_scene_id[item['id']]
+            cur_scene_id  = self.db_scene_id[item['id']]
             pic_scene_list.append(cur_scene_id)
-            pic_feat_list.append(item['image_obj_dic']['feats'])
+            pic_feat_list.append(item['image_obj_dic']['feat'])
                           
         # 提交数据库
         self.db_picid_list = self.dbhandler.addmanyPicFeats(pic_scene_list)
@@ -151,9 +155,10 @@ class main(BasicPart):
     def process_obj_thread(self):
         # 存储与处理物体信息的线程
         # 不涉及数据库存储
+        self.lg("save_objs")        
         obj_dic_list = []                
         for index, item in enumerate(self.item_list):
-            cur_pic_id  = sel.db_picid_list[index]
+            cur_pic_id  = self.db_picid_list[index]
             obj_dic = {}
             obj_dic['picid'] = cur_pic_id
             obj_dic['objs']  = item['image_obj_dic']['tag_name']
@@ -178,6 +183,7 @@ class main(BasicPart):
         """数据库中存储场景信息, 建立场景id与数据库场景id的映射
             self.db_scene_id[i] <- self.scene_id[i] = i
         """
+        self.lg("save_scene")
         sceens_id,starttime,length = self.videosample.getSceneInfo()
         numSceens = len(sceens_id)
         videoids = [self.videoinfo['id']] * numSceens
@@ -223,9 +229,9 @@ class main(BasicPart):
     def after_process(self):
         self.e_time = time.time()
         self.lg("OD+FR: time = "+str(self.e_time - self.s_time))
-        self.lg("main: [START] Store procedure.")
+        self.lg("[START] Store procedure.")
         self.store_procedure()
-        self.lg("main: [OVER]  Store procedure.")
+        self.lg("[OVER]  Store procedure.")
         
     def start(self):
         input_queue, input_lock = self.__init_pipeline()
