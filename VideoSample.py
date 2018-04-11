@@ -60,6 +60,33 @@ class VideoSample(BasicPart):
     def process_thread(self):
         scenedetect.detect_scenes_file(self.videoname, self.smgr)
 
+    def getSceneInfo(self):
+        """返回场景信息, 增加sceen0
+        """
+        self.lg("准备读取sceen列表...")
+        self.avaliable.acquire()
+        self.lg("成功读取sceen列表.")
+        
+        sceens_id = []
+        starttime = []
+        length    = []
+        
+        # 添加sceen0
+        sceens_id.append(0)
+        starttime.append(0)
+        length.append(scene_start_sec[0])
+        
+
+        # csv_writer.writerow(["Scene Number", "Frame Number (Start)",
+        #                      "Timecode", "Start Time (seconds)", "Length (seconds)"])
+        for i, _ in enumerate(self.smgr.scene_list):
+            sceens_id.append(i+1)
+            starttime.append(scene_start_sec[i])
+            length.append(scene_len_sec[i])
+        
+        return sceens_id,starttime,length
+
+
     def sample(self, videoname):
         """对视频进行取样并返回场景信息
             对返回值进行修改
@@ -83,8 +110,9 @@ class VideoSample(BasicPart):
         perf_update_rate  = perf_update_rate)
 
         # 新线程进行检测，直接返回产生场景数据的队列和锁
+        # self.avaliable 为是否可以返回scene列表的标志：全部scene生成后才可返回
         threading.Thread(target   = self.process_thread).start()
-        pic_queue, pic_queue_lock = self.smgr.getQueueAndLock()
+        pic_queue, pic_queue_lock, self.avaliable = self.smgr.getQueueAndLock()
         return pic_queue, pic_queue_lock
 
 

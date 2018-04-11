@@ -80,13 +80,16 @@ class SceneManager(object):
         # 当开始处理时，获得锁，直到处理结束
         self.pic_queue_lock     = Lock()
         self.pic_queue_lock.acquire()
+        
+        self.sl_avaliable       = Lock()
+        self.sl_avaliable.acquire()
 
         # The detector is stored in a list, to support the ability of combining
         # detection algorithms/classes in the future.
         self.detector_list = [ self.detector ]
 
     def getQueueAndLock(self):
-        return self.pic_queue, self.pic_queue_lock
+        return self.pic_queue, self.pic_queue_lock, self.sl_avaliable
 
     def _parse_args(self):
         """ Parses a command-line vector (from argparse) into the appropriate

@@ -25,6 +25,10 @@ except ImportError:
 class FaceRecog(BasicPart):
     """
         人脸识别类
+            处理后item格式:
+             {'id','isIN', '','face_result':}
+             pic_face_dic['landmarks'] = lands
+             pic_face_dic['feats']     = feats
             startThread(queue, queue_lock)
             人脸识别队列
 
@@ -35,7 +39,8 @@ class FaceRecog(BasicPart):
 
     def __init__(self, 
         threshold = None, 
-        logfile   = None, 
+        logfile   = None,
+        picShow   = False,          
         isShow    = False): 
         '''
             threshold: 人脸大小阈值
@@ -44,11 +49,11 @@ class FaceRecog(BasicPart):
             
         '''
         BasicPart.__init__(self, logfile=logfile, isShow=isShow)
-        
+        self.picShow  = picShow
         self.detector = Detector()
         self.aligner = Aligner()
         self.identifier = Identifier()
-
+        # self.thresh = self.config.getint('facerecog','threshold')
         if threshold != None:
             self.thresh = threshold
         
@@ -65,10 +70,11 @@ class FaceRecog(BasicPart):
         lands, faces, feats = self.__extract_features(image) 
         if self.isShow:
             logging.info("detecting %s: find %d faces"%(name, len(lands))) 
-            draw = ImageDraw.Draw(image)
-            for i, face in enumerate(faces):
-                draw.rectangle([face.left, face.top, face.right, face.bottom], outline='red') 
-            image.show()
+            if self.picShow:
+                draw = ImageDraw.Draw(image)
+                for i, face in enumerate(faces):
+                    draw.rectangle([face.left, face.top, face.right, face.bottom], outline='red') 
+                image.show()
         pic_face_dic = {}
         pic_face_dic['landmarks'] = lands
         pic_face_dic['feats']     = feats
@@ -90,11 +96,12 @@ class FaceRecog(BasicPart):
             image = Image.open(pic).convert('RGB')
             lands, faces, feats = self.__extract_features(image) 
             if self.isShow:
-                logging.info("detecting %s: find %d faces"%(pic, len(lands)))                 
-                draw = ImageDraw.Draw(image)
-                for i, face in enumerate(faces):
-                    draw.rectangle([face.left, face.top, face.right, face.bottom], outline='red') 
-                image.show()
+                logging.info("detecting %s: find %d faces"%(pic, len(lands))) 
+                if self.picShow:                
+                    draw = ImageDraw.Draw(image)
+                    for i, face in enumerate(faces):
+                        draw.rectangle([face.left, face.top, face.right, face.bottom], outline='red') 
+                    image.show()
             pic_dic = {}
             pic_dic['name']      = pic
             pic_dic['landmarks'] = lands
@@ -115,8 +122,6 @@ class FaceRecog(BasicPart):
             landmarks.append(landmark)
             feat = self.identifier.extract_feature_with_crop(img, landmark)
             feats.append(feat)
-        if self.isShow:
-            logging.info(str(len(faces)))
         return landmarks, faces, feats 
     
     def __del__(self):
@@ -136,8 +141,7 @@ class FaceRecog(BasicPart):
                 else:
                     name = str(item['id']) + "_OUT"
                 item['name'] = name
-            # print(sceneitem)
-            result = self.__Recognation(name, item['data'])
+            result = self.__Recognation(item['name'], item['data'])
         
             # 加入处理结果队列
             item['face_result'] = result

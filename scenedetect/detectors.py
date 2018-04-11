@@ -32,7 +32,6 @@ import cv2
 import numpy as np
 # import minpy.numpy as np
 
-
 # Default value for -d / --detector CLI argument (see get_available_detectors()
 # for a list of valid/enabled detection methods and their string equivalents).
 DETECTOR_DEFAULT = 'threshold'

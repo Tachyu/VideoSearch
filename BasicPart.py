@@ -45,6 +45,13 @@ class BasicPart:
     def read_config(self):
         pass
 
+    def after_process(self):
+        pass
+
+    def lg(self, infomation):
+        if self.isShow:
+            logging.info(infomation)
+
     def process_thread(self):
         logging.info(self.__class__.__name__+ "\t__process_thread")                
         isProcessOver = False
@@ -60,10 +67,12 @@ class BasicPart:
                 else:
                     time.sleep(0.1)
             # 处理   
-            self.process(item)
+            if item != None:
+                self.process(item)
 
             # 处理结束
             if self.input_over_lock.acquire(False):
                 isProcessOver = True
         # 完毕
         self.out_over_lock.release()
+        self.after_process()

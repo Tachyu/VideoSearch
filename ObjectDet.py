@@ -35,6 +35,14 @@ except ImportError:
 class ObjectDet(BasicPart):
     """
         物体识别类
+            image_obj_dic['boxes']   = out_boxes 
+            image_obj_dic['scores']  = out_scores
+            image_obj_dic['classes'] = out_classes
+            image_obj_dic['tag_name'] = image_tag_name
+            image_obj_dic['feat']    = model_features
+            
+            item['image_obj_dic']
+
             StartDetectThread(queue, queue_lock)
             
             __Detect(img)
@@ -44,6 +52,7 @@ class ObjectDet(BasicPart):
 
     def __init__(self, 
         logfile   = None, 
+        picShow   = False,
         isShow    = False): 
         '''
             useconfig：读取配置文件
@@ -52,6 +61,7 @@ class ObjectDet(BasicPart):
             
         '''
         BasicPart.__init__(self, logfile=logfile, isShow=isShow)
+        self.picShow = picShow
         self.__read_config()
 
 
@@ -67,7 +77,7 @@ class ObjectDet(BasicPart):
         
 
         # Read classes name
-        with open(self.classes_path) as f:
+        with open(self.classes_path,'r',encoding='utf8') as f:
             class_names = f.readlines()
         self.class_names = [c.strip() for c in class_names]
         self.class_names = np.array(self.class_names)
@@ -168,57 +178,60 @@ class ObjectDet(BasicPart):
 
         out_classes = np.array(out_classes)
 
-        image_tag_name = set([self.class_names[i] for i in out_classes])
-        print(image_tag_name)
+        image_tag_name = list(set([self.class_names[i] for i in out_classes]))
+       
         image_obj_dic            = {}
         image_obj_dic['boxes']   = out_boxes
         image_obj_dic['scores']  = out_scores
         image_obj_dic['classes'] = out_classes
+        image_obj_dic['tag_name'] = image_tag_name
+        
         # image_obj_dic['classes'] = image_tag_name
         
         image_obj_dic['feat']    = model_features
         if self.isShow:
-            logging.info('Found {} boxes for {}'.format(len(out_boxes), name))
-            font = ImageFont.truetype(
-                    font=self.font,
-                    size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
-            thickness = (image.size[0] + image.size[1]) // 300
+            logging.info("ObjectDetect: detecting %s: find %s"%(name, str(image_tag_name)))
+            if self.picShow:
+                font = ImageFont.truetype(
+                        font=self.font,
+                        size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
+                thickness = (image.size[0] + image.size[1]) // 300
 
-            for i, c in reversed(list(enumerate(out_classes))):
-                predicted_class = self.class_names[c]
-                box             = out_boxes[i]
-                score           = out_scores[i]
+                for i, c in reversed(list(enumerate(out_classes))):
+                    predicted_class = self.class_names[c]
+                    box             = out_boxes[i]
+                    score           = out_scores[i]
 
-                label           = '{} {:.2f}'.format(predicted_class, score)
+                    label           = '{} {:.2f}'.format(predicted_class, score)
 
-                draw       = ImageDraw.Draw(image)
-                label_size = draw.textsize(label, font)
+                    draw       = ImageDraw.Draw(image)
+                    label_size = draw.textsize(label, font)
 
-                top, left, bottom, right = box
-                top                      = max(0, np.floor(top + 0.5).astype('int32'))
-                left                     = max(0, np.floor(left + 0.5).astype('int32'))
-                bottom                   = min(image.size[1], np.floor(bottom + 0.5).astype('int32'))
-                right                    = min(image.size[0], np.floor(right + 0.5).astype('int32'))
-                # print(label, (left, top), (right, bottom))
+                    top, left, bottom, right = box
+                    top                      = max(0, np.floor(top + 0.5).astype('int32'))
+                    left                     = max(0, np.floor(left + 0.5).astype('int32'))
+                    bottom                   = min(image.size[1], np.floor(bottom + 0.5).astype('int32'))
+                    right                    = min(image.size[0], np.floor(right + 0.5).astype('int32'))
+                    # print(label, (left, top), (right, bottom))
 
-                if top - label_size[1] >= 0:
-                    text_origin = np.array([left, top - label_size[1]])
-                else:
-                    text_origin = np.array([left, top + 1])
+                    if top - label_size[1] >= 0:
+                        text_origin = np.array([left, top - label_size[1]])
+                    else:
+                        text_origin = np.array([left, top + 1])
 
-                # My kingdom for a good redistributable image drawing library.
-                for i in range(thickness):
+                    # My kingdom for a good redistributable image drawing library.
+                    for i in range(thickness):
+                        draw.rectangle(
+                            [left + i, top + i, right - i, bottom - i],
+                            outline=self.colors[c])
                     draw.rectangle(
-                        [left + i, top + i, right - i, bottom - i],
-                        outline=self.colors[c])
-                draw.rectangle(
-                    [tuple(text_origin), tuple(text_origin + label_size)],
-                    fill=self.colors[c])
-                draw.text(text_origin, label, fill=(0, 0, 0), font=font)
-                del draw
-            image.show()
-            time.sleep(0.7)
-            image.close()
+                        [tuple(text_origin), tuple(text_origin + label_size)],
+                        fill=self.colors[c])
+                    draw.text(text_origin, label, fill=(0, 0, 0), font=font)
+                    del draw
+                image.show()
+                # time.sleep(0.7)
+                # image.close()
         return image_obj_dic
 
     def process(self, item):

@@ -108,6 +108,7 @@ def detect_scenes_file(path,scene_manager):
             print('[PySceneDetect] FATAL ERROR - could not open video %s.' % path)
         # 出现错误时释放锁
         scene_manager.pic_queue_lock.release()
+        scene_manager.sl_avaliable.release()
         return (video_fps, frames_read)
     elif not scene_manager.quiet_mode:
         print('[PySceneDetect] Parsing video %s...' % file_name)
@@ -139,6 +140,7 @@ def detect_scenes_file(path,scene_manager):
         cap, scene_manager, start_frame, end_frame, duration_frames, file_name)
     # 释放锁
     scene_manager.pic_queue_lock.release()
+    scene_manager.sl_avaliable.release()
     # time.sleep(1)
     time_end = time.time()
     print('detect_scenes_file time = ' + str(time_end - time_start))
@@ -266,8 +268,40 @@ def detect_scenes(cap, scene_manager, start_frame,
                 print("[PySceneDetect] Current Processing Speed: %5.1f FPS" % perf_curr_rate)
 
         # save images on scene cuts/breaks if requested (scaled if using -df)
+        # if scene_manager.save_images:
+        #     num_scenes = len(scene_manager.scene_list)
+        #     if cut_found:
+        #         if not os.path.exists(scene_manager.save_image_prefix):
+        #             os.mkdir(scene_manager.save_image_prefix)
+        #             print('mkdir ' + scene_manager.save_image_prefix)
+        #         if scene_manager.save_image_prefix != '':
+        #             cur_image_path_prefix = os.path.join(scene_manager.save_image_prefix,image_path_prefix)
+        #         save_preview_images(
+        #             cur_image_path_prefix, im_cap, last_frame, len(scene_manager.scene_list))
+        #     # 将图片加入队列, 并加上描述（文件名）
+        #     # print(type(last_frame))
+        #     if isinstance(last_frame, (numpy.ndarray)):
+        #         pic_out_dict = {}
+        #         pic_out_dict['isIN'] = False
+        #         pic_out_dict['id'] = num_scenes  
+        #         # print(last_frame)
+        #         pic_out_dict['data'] = copy.deepcopy(last_frame)
+        #         scene_manager.pic_queue.put(pic_out_dict)
+                
+
+            
+        #     pic_in_dict = {}
+        #     pic_in_dict['isIN'] = True
+        #     pic_in_dict['id'] = num_scenes + 1  
+        #     # print(im_cap)            
+        #     pic_in_dict['data'] = copy.deepcopy(im_cap)
+        #     scene_manager.pic_queue.put(pic_in_dict)
+
+        #     del last_frame
+        #     last_frame = im_cap.copy()
+
         if cut_found: 
-            num_scenes = len(scene_manager.scene_list)
+            num_scenes = len(scene_manager.scene_list) - 1
             if scene_manager.save_images:
                 if not os.path.exists(scene_manager.save_image_prefix):
                     os.mkdir(scene_manager.save_image_prefix)
@@ -278,6 +312,7 @@ def detect_scenes(cap, scene_manager, start_frame,
 
                 save_preview_images(
                     cur_image_path_prefix, im_cap, last_frame, num_scenes)
+
             # 将图片加入队列, 并加上描述（文件名）
             # print(type(last_frame))
             if isinstance(last_frame, (numpy.ndarray)):
@@ -287,20 +322,19 @@ def detect_scenes(cap, scene_manager, start_frame,
                 # print(last_frame)
                 pic_out_dict['data'] = copy.deepcopy(last_frame)
                 scene_manager.pic_queue.put(pic_out_dict)
-                
-
-            
+               
             pic_in_dict = {}
             pic_in_dict['isIN'] = True
             pic_in_dict['id'] = num_scenes + 1  
             # print(im_cap)            
             pic_in_dict['data'] = copy.deepcopy(im_cap)
             scene_manager.pic_queue.put(pic_in_dict)
+        del last_frame
+        last_frame = im_cap.copy()
                 
 
             
-            del last_frame
-            last_frame = im_cap.copy()
+        
     #while over
     # print('process_frame time = ' + str(t))
     
@@ -308,6 +342,9 @@ def detect_scenes(cap, scene_manager, start_frame,
     for detector in scene_manager.detector_list:
         detector.post_process(scene_manager.scene_list, frames_read)
 
+    if start_frame.get_frames() > 0:
+        frames_read -= start_frame.get_frames()
+        
     if scene_manager.save_csv_filename != '':
         scene_list_msec = [(1000.0 * x) / float(video_fps) for x in scene_manager.scene_list]
         scene_list_tc = [scenedetect.timecodes.get_string(x) for x in scene_list_msec]
@@ -320,9 +357,6 @@ def detect_scenes(cap, scene_manager, start_frame,
         with open(scene_manager.save_csv_filename, 'w') as csvf:
             output_scene_list(csvf, scene_manager, scene_list_tc, scene_start_sec,
                         scene_len_sec)
-
-    if start_frame.get_frames() > 0:
-        frames_read -= start_frame.get_frames()
     return (frames_read, frames_processed)
 
 
@@ -453,6 +487,7 @@ def output_scene_list(csv_file, smgr, scene_list_tc, scene_start_sec,
         # Output detailed, human-readable scene list.
         csv_writer.writerow(["Scene Number", "Frame Number (Start)",
                              "Timecode", "Start Time (seconds)", "Length (seconds)"])
+
         for i, _ in enumerate(smgr.scene_list):
             csv_writer.writerow([str(i+1), str(smgr.scene_list[i]),
                                  scene_list_tc[i], str(scene_start_sec[i]),
