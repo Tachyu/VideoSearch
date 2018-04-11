@@ -344,7 +344,9 @@ def detect_scenes(cap, scene_manager, start_frame,
 
     if start_frame.get_frames() > 0:
         frames_read -= start_frame.get_frames()
-        
+    scene_manager.scene_start_sec = scene_start_sec
+    scene_manager.scene_len_sec   = scene_len_sec    
+       
     if scene_manager.save_csv_filename != '':
         scene_list_msec = [(1000.0 * x) / float(video_fps) for x in scene_manager.scene_list]
         scene_list_tc = [scenedetect.timecodes.get_string(x) for x in scene_list_msec]
@@ -487,7 +489,6 @@ def output_scene_list(csv_file, smgr, scene_list_tc, scene_start_sec,
         # Output detailed, human-readable scene list.
         csv_writer.writerow(["Scene Number", "Frame Number (Start)",
                              "Timecode", "Start Time (seconds)", "Length (seconds)"])
-
         for i, _ in enumerate(smgr.scene_list):
             csv_writer.writerow([str(i+1), str(smgr.scene_list[i]),
                                  scene_list_tc[i], str(scene_start_sec[i]),

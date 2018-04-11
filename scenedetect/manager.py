@@ -54,22 +54,24 @@ class SceneManager(object):
                  save_image_prefix = '',
                  save_csv_filename = ''):
 
-        self.scene_list         = list()
-        self.args               = args
-        self.detector           = detector
-        self.cap                = None
-        self.perf_update_rate   = perf_update_rate
+        self.scene_list        = list()
+        self.scene_start_sec   = list()
+        self.scene_len_sec     = list()
+        self.args              = args
+        self.detector          = detector
+        self.cap               = None
+        self.perf_update_rate  = perf_update_rate
 
-        self.stats_writer       = stats_writer
-        self.downscale_factor   = downscale_factor
-        self.frame_skip         = frame_skip
-        self.save_images        = save_images
-        self.timecode_list      = [start_time, end_time, duration]
-        self.quiet_mode         = quiet_mode
+        self.stats_writer      = stats_writer
+        self.downscale_factor  = downscale_factor
+        self.frame_skip        = frame_skip
+        self.save_images       = save_images
+        self.timecode_list     = [start_time, end_time, duration]
+        self.quiet_mode        = quiet_mode
 
-        ###### Sat Mar 31 10:     17: 38 CST 2018
-        self.save_image_prefix  = save_image_prefix
-        self.save_csv_filename  = save_csv_filename
+        ###### Sat Mar 31 10:    17: 38 CST 2018
+        self.save_image_prefix = save_image_prefix
+        self.save_csv_filename = save_csv_filename
         
         if self.args is not None: 
             self._parse_args()

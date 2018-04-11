@@ -70,6 +70,8 @@ class VideoSample(BasicPart):
         sceens_id = []
         starttime = []
         length    = []
+        scene_start_sec = self.smgr.scene_start_sec
+        scene_len_sec = self.smgr.scene_len_sec
         
         # 添加sceen0
         sceens_id.append(0)

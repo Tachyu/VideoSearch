@@ -194,7 +194,7 @@ class main(BasicPart):
         self.lg("Video: %s has been stored in database, id=%d."
         %(self.videoinfo['name'],self.videoinfo['id']))
 
-    def store_procedure():
+    def store_procedure(self):
         self.db_picid_lock = threading.Lock()
         self.face_finish_lock = threading.Lock()
         self.obj_finish_lock = threading.Lock()
