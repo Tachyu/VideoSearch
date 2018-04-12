@@ -242,7 +242,7 @@ class main(BasicPart):
 if __name__ == "__main__":
     # main("Data/Videos/20170701_small.mp4",isShow=False).start()
     videoinfo = {}
-    videoinfo['name'] = "Data/Videos/demo.mp4"
+    videoinfo['name'] = "Data/Videos/20170701_small.mp4"
     videoinfo['descrption'] = 'PythonT'
     main(videoinfo,isShow=True).start()
     

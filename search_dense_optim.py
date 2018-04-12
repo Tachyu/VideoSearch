@@ -30,9 +30,12 @@ print(query_item.shape)
 
 M = 15
 efC = 100
-
 num_threads = 4
-index_time_params = {'M': M, 'indexThreadQty': num_threads, 'efConstruction': efC, 'post' : 0}
+
+index_time_params = {'M': M, 
+'indexThreadQty': num_threads, 
+'efConstruction': efC, 
+'post' : 0}
 print('Index-time parameters', index_time_params)
 
 # Number of neighbors 
@@ -40,12 +43,17 @@ K=100
 space_name='l2'
 
 # Intitialize the library, specify the space, the type of the vector and add data points 
-index = nmslib.init(method='hnsw', space=space_name, data_type=nmslib.DataType.DENSE_VECTOR) 
+index = nmslib.init(method='hnsw', 
+space=space_name, 
+data_type=nmslib.DataType.DENSE_VECTOR) 
+
 index.addDataPointBatch(features_data) 
 
 # Create an index
 start = time.time()
-index_time_params = {'M': M, 'indexThreadQty': num_threads, 'efConstruction': efC}
+index_time_params = {'M': M, 
+'indexThreadQty': num_threads, 
+'efConstruction': efC}
 index.createIndex(index_time_params) 
 end = time.time() 
 print('Index-time parameters', index_time_params)
@@ -62,7 +70,9 @@ query_qty = 1
 # print(query_qty)
 # print(query_matrix.shape)
 start = time.time() 
-nbrs = index.knnQueryBatch(query_item, k = K, num_threads = num_threads)
+nbrs = index.knnQueryBatch(query_item, 
+k = K, 
+num_threads = num_threads)
 end = time.time() 
 print('kNN time total=%f (sec), per query=%f (sec), per query adjusted for thread number=%f (sec)' % 
       (end-start, float(end-start)/query_qty, num_threads*float(end-start)/query_qty)) 
