@@ -64,9 +64,13 @@ class FaceRecog(BasicPart):
         """
         self.thresh = self.config.getint('facerecog','threshold')
 
-    def __Recognation(self, name, img):
+    def __Recognation(self, name, img=None):
         # 处理图片, 返回feature和landmark信息
-        image = Image.fromarray(cv2.cvtColor(img,cv2.COLOR_BGR2RGB))
+        if img is not None: # 从视频中传来的
+            image = Image.fromarray(cv2.cvtColor(img,cv2.COLOR_BGR2RGB))
+        else:
+            image = Image.open(name)
+
         lands, faces, feats = self.__extract_features(image) 
         self.lg("detecting %s: find %d faces"%(name, len(lands))) 
         if self.picShow:
@@ -107,6 +111,15 @@ class FaceRecog(BasicPart):
             pic_dic['feats']     = feats
             pic_dic_list.append(pic_dic)
         return pic_dic_list
+
+    def extract_image_face_feature(self, imagename):
+        
+        '''
+            pic_face_dic['landmarks'] = lands
+            pic_face_dic['feats']     = feats
+        '''
+        pic_face_dic = self.__Recognation(imagename)
+        return pic_face_dic
 
     def __extract_features(self, img):
         # detect face in image

@@ -63,6 +63,22 @@ class DBHandler:
             for re in cursor:
                 newid = re[0]
         return newid
+    
+    def __calldbproc_table(self, args):
+        cursor = self.connection.cursor()                    
+        cursor.callproc(args[0],args[1:])
+        results = []
+        for re in cursor:
+            results.append(re)
+        return results
+
+    def __excutesql_table(self, sql, args):
+        cursor = self.connection.cursor()                    
+        cursor.execute(sql, args)
+        results = []
+        for re in cursor:
+            results.append(re)
+        return results
 
     def addSceneInfo(self, videoid, starttime, length):
          """增加场景信息
@@ -132,7 +148,99 @@ class DBHandler:
             sceneids  {int} --  场景id列表
         """
         return self.__addmany('PicInfo','PicFeatId',[sceneids])
-        
+    def test(self, picid):
+        results = self.__calldbproc_table([
+            '"public"."querypic"',
+             int(picid)])
+        print(results)
+
+    def search_scene_video_info_by_picid(self, picid):
+        """根据picid来查询对应的图片，场景以及视频信息
+        result_dic['sceneid']   = results[0][0]
+        result_dic['videoid']   = results[0][1]
+        result_dic['videoname'] = results[0][2]
+        result_dic['starttime'] = results[0][3]
+        result_dic['length']    = results[0][4]
+        """
+
+        results = self.__calldbproc_table([
+            '"public"."querypic"',
+             int(picid)])
+
+        result_dic              = {}
+        result_dic['sceneid']   = results[0][0]
+        result_dic['videoid']   = results[0][1]
+        result_dic['videoname'] = results[0][2]
+        result_dic['starttime'] = results[0][3]
+        result_dic['length']    = results[0][4]
+        return result_dic
+
+    def search_scene_video_info_by_faceid(self, faceid):
+        '''
+        result_dic['sceneid']   = results[0][0]
+        result_dic['videoid']   = results[0][1]
+        result_dic['videoname'] = results[0][2]
+        result_dic['starttime'] = results[0][3]
+        result_dic['length']    = results[0][4]
+        '''
+        sql = '''
+        SELECT
+            "public"."SceneInfo"."SceneId",
+            "public"."VideoId"."VideoId",
+            "public"."VideoId"."VideoName",
+            "public"."SceneInfo"."StartTime",
+            "public"."SceneInfo"."Length"
+        FROM
+            "public"."SceneInfo",
+            "public"."VideoId" 
+        WHERE
+            "public"."SceneInfo"."SceneId" = (
+        SELECT
+            "public"."PicInfo"."SceenId"
+        FROM
+            "public"."PicInfo" 
+            WHERE 
+            "public"."PicInfo"."PicFeatId"= ( 
+            SELECT 
+            "public"."FaceInfo"."PicId" 
+            FROM 
+            "public"."FaceInfo" 
+            WHERE 
+            "public"."FaceInfo"."FaceFeatId" = %s ))
+            AND "public"."SceneInfo"."VideoId"="public"."VideoId"."VideoId" ;
+        '''
+        results                 = self.__excutesql_table(sql, [faceid])
+        result_dic              = {}
+        result_dic['sceneid']   = results[0][0]
+        result_dic['videoid']   = results[0][1]
+        result_dic['videoname'] = results[0][2]
+        result_dic['starttime'] = results[0][3]
+        result_dic['length']    = results[0][4]
+        return result_dic
+
+    def search_videoinfo_by_videoid(self, videoid):
+        """根据faceid来查询对应的图片，场景以及视频信息
+        """
+        sql = '''
+        SELECT
+            "public"."VideoId"."VideoId",
+            "public"."VideoId"."VideoName",
+            "public"."VideoInfo"."Length",
+            "public"."VideoInfo"."Descrption" 
+        FROM
+            "public"."VideoInfo",
+            "public"."VideoId" 
+        WHERE
+            "public"."VideoId"."VideoId" = %s 
+            AND "public"."VideoInfo"."VideoId" = "public"."VideoId"."VideoId";
+        '''
+        results                  = self.__excutesql_table(sql, [videoid])
+        result_dic               = {}
+        result_dic['videoid']    = results[0][0]        
+        result_dic['videname']   = results[0][1]
+        result_dic['length']     = results[0][2]
+        result_dic['Descrption'] = results[0][2]
+        return result_dic   
         
     def commit(self):
         """将视频信息提交数据库
@@ -156,6 +264,7 @@ class DBHandler:
         return sc
     
     def __del__(self):
+        self.connection.commit()
         self.connection.close() 
 
 if __name__ == "__main__":
@@ -163,7 +272,15 @@ if __name__ == "__main__":
     # handler.addVideoInfo("Data/Videos/demo.mp4", "Python Test")    
     # handler.addSceneInfo(47, 0.0, 1.0)   
     # result = handler.addmanySceneInfo([47,47,47], [1,2,3],[4,5,6])  
-    result = handler.addmanyFaceFeats([37,37,37],[1,1,1])  
+    # result = handler.addmanyFaceFeats([37,37,37],[1,1,1])  
     # result = handler.addmanyPicFeats([37,39,41])      
-    print(result)
-    infos  = handler.commit()
+    # print(result)
+    info = handler.search_scene_video_info_by_faceid(339)
+    print(info)
+
+    info = handler.search_scene_video_info_by_picid(101)
+    print(info)
+
+    info = handler.search_videoinfo_by_videoid(88)
+    print(info)
+    # infos  = handler.commit()

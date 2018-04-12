@@ -40,16 +40,22 @@ class SearchFeature(BasicPart):
         index = nmslib.init(method='hnsw', space=self.space_name, data_type=nmslib.DataType.DENSE_VECTOR)
         return index
 
-    def __queryitem(self, id_list, index, item):
+    def __queryitem(self, id_list, index, item, K):
         # Setting query-time parameters
         query_time_params = {'efSearch': self.efSearch}
         index.setQueryTimeParams(query_time_params)
 
         # Querying
+        size = len(item)
+        item = np.array(item)
+        item = item.reshape((1,size))
+        
         nbrs = index.knnQueryBatch(item, 
-        k = self.K, 
+        k = K, 
         num_threads = self.num_threads)
-        result = [id_list[i] for i in nbrs]
+        # print(nbrs)
+        targets = nbrs[0][0]
+        result = [id_list[int(i)] for i in targets]
         return result
 
     def __read_featfile(self, id_name, path):
@@ -118,15 +124,15 @@ class SearchFeature(BasicPart):
         return self.__save_feat_index('content_feat', 'content_index', prefix, 'sfid', isSave)
 
     def __query_index(self, query_feat, 
-        index_dir_name, index_prefix=None, 
+        index_dir_name, K=100, index_prefix=None, 
         index=None, id_list=None):
-        if index_prefix == None and index == None:
+        if index_prefix is None and index is None:
             self.lg("index_prefix or index should not None.")
             return None
         
         if index != None:
             # 读内存中的index            
-            if id_list == None:
+            if id_list is None:
                 self.lg("id_list should not None.")
                 return None
         else:
@@ -135,19 +141,20 @@ class SearchFeature(BasicPart):
             index_dir, id_dir = self.__get_index_id_path(index_prefix, index_dir_name)            
             index.loadIndex(index_dir)
             id_list = np.load(id_dir)
-        result = self.__queryitem(id_list, index, query_feat)
-        self.lg(str(result))
+        result = self.__queryitem(id_list, index, query_feat, K)
+        # self.lg(str(result))
         return result
 
     def queryFace(self, facefeat, 
         index_prefix=None, 
         index=None, id_list=None):
-        return self.__query_index(facefeat, 'faces_feat', index_prefix,index, id_list)
+        print(index_prefix)
+        return self.__query_index(facefeat, 'faces_index', 100, index_prefix,index, id_list)
 
     def queryContent(self, facefeat, 
         index_prefix=None, 
         index=None, id_list=None):
-        return self.__query_index(facefeat, 'content_feat', index_prefix,index, id_list)
+        return self.__query_index(facefeat, 'content_index', index_prefix,index, id_list)
         
 if __name__ == "__main__":
     sf = SearchFeature(isShow=True)

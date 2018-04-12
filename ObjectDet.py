@@ -74,8 +74,6 @@ class ObjectDet(BasicPart):
         self.font            = self.config.get('yolo','font')
 
     def __kerasinit(self):
-        
-
         # Read classes name
         with open(self.classes_path,'r',encoding='utf8') as f:
             class_names = f.readlines()
@@ -132,7 +130,21 @@ class ObjectDet(BasicPart):
         self.sess = K.get_session()        
         self.lg("KERAS INIT OVER")
 
-
+    def extract_image_feature(self, imagename):
+        self.__kerasinit()
+        '''
+            image_obj_dic            = {}
+            image_obj_dic['boxes']   = out_boxes
+            image_obj_dic['scores']  = out_scores
+            image_obj_dic['classes'] = out_classes
+            image_obj_dic['tag_name'] = image_tag_name
+            image_obj_dic['feat'] = feat
+        '''
+        image = Image.open(imagename)
+        image = np.asarray(image)
+        image_obj_dic = self.__Detection(imagename, image)
+        pass
+        
     def __PreProcess(self, img_array_data):
         """将数组型图片数据转换为网络输入的格式
         
