@@ -226,6 +226,7 @@ class DBHandler:
             "public"."VideoId"."VideoId",
             "public"."VideoId"."VideoName",
             "public"."VideoInfo"."Length",
+            "public"."VideoInfo"."AddTime",
             "public"."VideoInfo"."Descrption" 
         FROM
             "public"."VideoInfo",
@@ -239,7 +240,8 @@ class DBHandler:
         result_dic['videoid']    = results[0][0]        
         result_dic['videname']   = results[0][1]
         result_dic['length']     = results[0][2]
-        result_dic['Descrption'] = results[0][2]
+        result_dic['addtime']    = results[0][3].strftime('%Y-%m-%d %H:%M:%S')        
+        result_dic['descrption'] = results[0][4]
         return result_dic   
         
     def commit(self):

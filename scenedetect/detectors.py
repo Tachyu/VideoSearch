@@ -235,6 +235,7 @@ class ThresholdDetector(SceneDetector):
             cut_detected = True
         return cut_detected
 
+import matplotlib.pyplot as plt  
 
 class ContentDetector(SceneDetector):
     """Detects fast cuts using changes in colour and intensity between frames.
@@ -244,13 +245,21 @@ class ContentDetector(SceneDetector):
     content scenes still using HSV information, use the DissolveDetector.
     """
 
-    def __init__(self, threshold = 30.0, min_scene_len = 15):
+    def __init__(self, threshold = 30.0, min_scene_len = 20):
         super(ContentDetector, self).__init__()
         self.threshold = threshold
         self.min_scene_len = min_scene_len  # minimum length of any given scene, in frames
         self.last_frame = None
         self.last_scene_cut = None
+        self.begin_hsv = None
         self.last_hsv = None
+        self.num_pixels = None
+        # self.surf = cv2.xfeatures2d.SURF_create()
+    
+    def calculate_delta(self, hsv_a, hsv_b):
+        delta_hsv = np.sum(np.abs(hsv_a.astype(np.int32) - hsv_b.astype(np.int32)), axis=(1,2)) / (float(self.num_pixels))
+        delta_hsv = np.append(delta_hsv, np.sum(delta_hsv)/3.0)
+        return delta_hsv
 
     def process_frame(self, frame_num, frame_img, frame_metrics, scene_list):
         # Similar to ThresholdDetector, but using the HSV colour space DIFFERENCE instead
@@ -258,6 +267,9 @@ class ContentDetector(SceneDetector):
 
         # Value to return indiciating if a scene cut was found or not.
         cut_detected = False
+        save_both    = False
+        # 额外计算本scene中头尾两个画面的hsv,决定是否保存尾部图片
+
 
         if self.last_frame is not None:
             # Change in average of HSV (hsv), (h)ue only, (s)aturation only, (l)uminance only.
@@ -272,38 +284,64 @@ class ContentDetector(SceneDetector):
             else:
                 num_pixels = frame_img.shape[0] * frame_img.shape[1]
                 curr_hsv = cv2.split(cv2.cvtColor(frame_img, cv2.COLOR_BGR2HSV))
-                last_hsv = self.last_hsv
-                if not last_hsv:
-                    last_hsv = cv2.split(cv2.cvtColor(self.last_frame, cv2.COLOR_BGR2HSV))
+                curr_hsv = np.array(curr_hsv)
 
-                delta_hsv = [-1, -1, -1]
-                for i in range(3):
-                    num_pixels = curr_hsv[i].shape[0] * curr_hsv[i].shape[1]
-                    curr_hsv[i] = curr_hsv[i].astype(np.int32)
-                    last_hsv[i] = last_hsv[i].astype(np.int32)
-                    delta_hsv[i] = np.sum(np.abs(curr_hsv[i] - last_hsv[i])) / float(num_pixels)
-                delta_hsv.append(sum(delta_hsv) / 3.0)
+                last_hsv = self.last_hsv
+                if last_hsv is None:
+                    last_hsv = cv2.split(cv2.cvtColor(self.last_frame, cv2.COLOR_BGR2HSV))
+                    last_hsv = np.array(last_hsv)
+
+                if not self.num_pixels:
+                    self.num_pixels = curr_hsv[0].shape[0] * curr_hsv[0].shape[1]
+                
+                # delta_hsv (3,)
+                delta_hsv = self.calculate_delta(curr_hsv, last_hsv)
+
+                # print(delta_hsv.shape)
+                # for i in range(3):
+                #     num_pixels = curr_hsv[i].shape[0] * curr_hsv[i].shape[1]
+                #     curr_hsv[i] = curr_hsv[i].astype(np.int32)
+                #     last_hsv[i] = last_hsv[i].astype(np.int32)
+                #     delta_hsv[i] = np.sum(np.abs(curr_hsv[i] - last_hsv[i])) / float(num_pixels)
+
+                # delta_hsv.append(sum(delta_hsv) / 3.0)
+                # print(delta_hsv)
                 delta_h, delta_s, delta_v, delta_hsv_avg = delta_hsv
 
                 frame_metrics[frame_num]['delta_hsv_avg'] = delta_hsv_avg
                 frame_metrics[frame_num]['delta_hue'] = delta_h
                 frame_metrics[frame_num]['delta_sat'] = delta_s
                 frame_metrics[frame_num]['delta_lum'] = delta_v
-
-                self.last_hsv = curr_hsv
+                
 
             if delta_hsv_avg >= self.threshold:
                 if self.last_scene_cut is None or (
                   (frame_num - self.last_scene_cut) >= self.min_scene_len):
+                    # img2 = cv2.drawKeypoints(frame_img,keypoints,None,(255,0,0))  
+                    # plt.imshow(img2)  
+                    # plt.show()   
+                    if self.begin_hsv is None:
+                        pass# First Scene
+                    else:
+                        # Compare begin and last
+                        _,_,_,value = self.calculate_delta(self.begin_hsv, self.last_hsv)
+                        if value > self.threshold/1.07 and value >= delta_hsv_avg:
+                            # save both
+                            print("SAVE "+str(delta_hsv_avg) + " : " +str(value))
+                            save_both = True
+                        else:
+                            print("NO-SAVE "+str(delta_hsv_avg) + " : " +str(value))
+                            
+                    self.begin_hsv = curr_hsv
                     scene_list.append(frame_num)
                     self.last_scene_cut = frame_num
                     cut_detected = True
-
+            self.last_hsv = curr_hsv
             #self.last_frame.release()
             del self.last_frame
                 
         self.last_frame = frame_img.copy()
-        return cut_detected
+        return cut_detected,save_both
 
     def post_process(self, scene_list, frame_num):
         """Not used for ContentDetector, as cuts are written as they are found."""

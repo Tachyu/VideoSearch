@@ -22,7 +22,7 @@ import pickle
 import zlib
 import types
 from BasicPart import BasicPart
-
+from keras.utils.vis_utils import plot_model
 # import warnings
 # warnings.filterwarnings("ignore")
 
@@ -53,16 +53,19 @@ class ObjectDet(BasicPart):
     def __init__(self, 
         logfile   = None, 
         picShow   = False,
+        single_pic_process = False,
         isShow    = False): 
         '''
             useconfig：读取配置文件
             logfile:   日志文件路径
             isShow:    显示图片处理过程
-            
+            single_pic_process: 处理单张图片
         '''
         BasicPart.__init__(self, logfile=logfile, isShow=isShow)
         self.picShow = picShow
         self.__read_config()
+        if single_pic_process:
+            self.__kerasinit()
 
 
     def __read_config(self):
@@ -72,6 +75,23 @@ class ObjectDet(BasicPart):
         self.score_threshold = self.config.getfloat('yolo','score_threshold')
         self.iou_threshold   = self.config.getfloat('yolo','iou_threshold')
         self.font            = self.config.get('yolo','font')
+
+    def watch_model(self):
+        # Load Model    
+        yolo_model = load_model(self.model_path)
+        
+        plot_model(yolo_model, to_file='model.png')
+        inp = yolo_model.input 
+        outputs = [layer.output for layer in yolo_model.layers] 
+        # print(outputs)
+        for index, out in enumerate(outputs):
+            para_num = out.shape[1] * out.shape[2] * out.shape[3]
+            print(str(index) + ": " + str(out) + " " + str(para_num))
+
+        # # Testing
+        # test = np.random.random(yolo_model.layers[0].input_shape)[np.newaxis,...]
+        # layer_outs = [func([test, 1.]) for func in functors]
+        # print(layer_outs)
 
     def __kerasinit(self):
         # Read classes name
@@ -87,8 +107,6 @@ class ObjectDet(BasicPart):
 
         # Load Model    
         self.yolo_model = load_model(self.model_path)
-        
-        # plot_model(yolo_model, to_file='model.png')
         # Verify model, anchors, and classes are compatible
         self.num_classes = len(self.class_names)
         self.num_anchors = len(self.anchors)
@@ -105,7 +123,7 @@ class ObjectDet(BasicPart):
         
         self.is_fixed_size = self.model_image_size != (None, None)
         
-        if self.isShow:
+        if self.picShow:
             # Generate colors for drawing bounding boxes.
             hsv_tuples = [(x / len(class_names), 1., 1.)
                         for x in range(len(class_names))]
@@ -131,7 +149,7 @@ class ObjectDet(BasicPart):
         self.lg("KERAS INIT OVER")
 
     def extract_image_feature(self, imagename):
-        self.__kerasinit()
+        
         '''
             image_obj_dic            = {}
             image_obj_dic['boxes']   = out_boxes
@@ -141,8 +159,16 @@ class ObjectDet(BasicPart):
             image_obj_dic['feat'] = feat
         '''
         image = Image.open(imagename)
+        # resize to 400 * x
+        scale = image.size[0] / 400.0
+        x     = 400
+        y     = int(image.size[1] / scale)
+
+        image = image.resize((x,y))
         image = np.asarray(image)
+        image = cv2.cvtColor(image,cv2.COLOR_RGB2BGR)
         image_obj_dic = self.__Detection(imagename, image)
+        return image_obj_dic
         pass
         
     def __PreProcess(self, img_array_data):
@@ -198,7 +224,8 @@ class ObjectDet(BasicPart):
         image_obj_dic['tag_name'] = image_tag_name
         
         # image_obj_dic['classes'] = image_tag_name
-        
+        # 降维至一维数组
+        model_features = np.array(model_features).flatten()
         image_obj_dic['feat']    = model_features
         self.lg("detecting %s: find %s"%(name, str(image_tag_name)))
         if self.picShow:
@@ -293,8 +320,9 @@ class ObjectDet(BasicPart):
             释放资源
         '''
         pass
-    
-if __name__ == '__main__':
+
+
+def t1():
     from VideoSample import VideoSample
     vname         = "Data/Videos/20170701_small.mp4"
     # vname         = "Data/Videos/20170701.mp4"
@@ -325,5 +353,11 @@ if __name__ == '__main__':
             isProcessOver = True
     e_time = time.time()
 
-    print("OD: time = "+str(e_time - s_time))
+    print("OD: time = "+str(e_time - s_time))  
+def t2():
+    ObjectDet(isShow=True).watch_model()
+
+if __name__ == '__main__':
+    t2()
+
 

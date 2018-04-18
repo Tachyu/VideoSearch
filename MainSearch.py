@@ -18,10 +18,11 @@ class MainSearch(BasicPart):
         BasicPart.__init__(self, logfile, isShow)
         self.imagename     = imagename
         self.facerecog     = FaceRecog(logfile, isShow)
-        self.objectdetect  = ObjectDet(logfile, isShow)
+        self.objectdetect  = ObjectDet(logfile, isShow, single_pic_process=True)
         self.dbhandler     = DBHandler()
-        self.searchfeature = SearchFeature(logfile, isShow)
+        self.SearchFeature = SearchFeature(logfile, isShow)
         self.prefix = prefix
+        
     
     def __get_db_info(self, id_type, id_list):
         """根据id查询数据库
@@ -31,12 +32,12 @@ class MainSearch(BasicPart):
         if id_type == 'face':
             for faceid in id_list:
                 v_s_info = self.dbhandler.search_scene_video_info_by_faceid(int(faceid))
-                results.append(v_s_info)
+                results.append(SceneInfo(v_s_info))
         else:
             for picid in id_list:
                 v_s_info = self.dbhandler.search_scene_video_info_by_picid(int(picid))
-                results.append(v_s_info)
-        return results
+                results.append(SceneInfo(v_s_info))
+        return set(results)
     
     def get_face_to_video_sceneinfo(self, faceidlist):
         results = self.__get_db_info('face', faceidlist)
@@ -55,7 +56,7 @@ class MainSearch(BasicPart):
     def search_face(self):
         pic_face_dic = self.facerecog.extract_image_face_feature(self.imagename)
         num_faces = len(pic_face_dic['feats'])
-        
+        print(pic_face_dic['landmarks'])
         if num_faces == 0:
             self.lg("Face not found")
             return None
@@ -66,18 +67,23 @@ class MainSearch(BasicPart):
         query_result = self.searchfeature.queryFace(query_feat, index_prefix=self.prefix)
 
         # TODO: 按照sceneid 去重
-
+        sceenid_unique = set(query_result)
         return query_result
 
     def search_pic(self):
         image_obj_dic = self.objectdetect.extract_image_feature(self.imagename)
         query_feat = image_obj_dic['feat']
+        query_feat = np.array(query_feat)
         query_result = self.searchfeature.queryContent(query_feat, index_prefix=self.prefix)
+        # TODO: 按照sceneid 去重
+        query_result_unique = set(query_result)
         return query_result
 
         # print(result)
     def show_pics(self, results):
+        image_names = []
         for list_index,re in enumerate(results):
+            re = re.dic
             timestamp  = re['starttime']
             sceneid    = re['sceneid']    
             full_videoname  = re['videoname']       
@@ -88,18 +94,41 @@ class MainSearch(BasicPart):
             '''%(timestamp,full_videoname,image_name)
             a = subprocess.getoutput(cmd)
             Image.open(image_name).show()
+            image_names.append(image_name)
+        
+        return image_names
 
+class SceneInfo:
+    def __init__(self, dic):
+        self.dic = dic
+    
+    def __eq__(self, other):
+        if isinstance(other, SceneInfo):
+            return self.dic['sceneid'] == other.dic['sceneid']
+        else:
+            return False
+    def __ne__(self, other):
+        return (not self.__eq__(other))
+    
+    def __str__(self):
+        return(str(self.dic))
 
-if __name__ == '__main__':
+    def __hash__(self):
+        return hash(self.dic['sceneid'])
+
+if __name__ == '__main__':  
     ms = MainSearch(prefix='test', imagename="Data/Tmp/tmp.png",isShow=True)
+    # ms = MainSearch(prefix='test', imagename="Data/Tmp/tmp.png",isShow=True)
+    
     # ms.create_indexs(True)
-    idlist = ms.search_face()[:5]
-    # results = ms.get_face_to_video_sceneinfo(idlist)  
-    # ms.show_pics(results)
-    # print(results)    
-    idlist = ms.search_pic()()[:5]
-    results = ms.get_content_to_video_sceneinfo(idlist)  
+    idlist = ms.search_face()[:10]
+    results = ms.get_face_to_video_sceneinfo(idlist)  
     ms.show_pics(results)
-    print(results)     
+
+    # idlist = ms.search_pic()[:5]
+    # results = ms.get_content_to_video_sceneinfo(idlist)  
+    # ms.show_pics(results)
+    for re in results:
+        print(re)     
         
         

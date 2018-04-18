@@ -45,7 +45,6 @@ class SearchFeature(BasicPart):
         query_time_params = {'efSearch': self.efSearch}
         index.setQueryTimeParams(query_time_params)
 
-        # Querying
         size = len(item)
         item = np.array(item)
         item = item.reshape((1,size))
@@ -151,12 +150,14 @@ class SearchFeature(BasicPart):
         print(index_prefix)
         return self.__query_index(facefeat, 'faces_index', 100, index_prefix,index, id_list)
 
-    def queryContent(self, facefeat, 
+    def queryContent(self, contentfeat, 
         index_prefix=None, 
         index=None, id_list=None):
-        return self.__query_index(facefeat, 'content_index', index_prefix,index, id_list)
+        return self.__query_index(contentfeat, 'content_index', 100, index_prefix,index, id_list)
         
 if __name__ == "__main__":
     sf = SearchFeature(isShow=True)
-    sf.save_facefeat_index('test')
+    sf.save_facefeat_index('test', isSave=True)
+    sf.save_contentfeat_index('test', isSave=True)
+    
     # sf.queryFace()

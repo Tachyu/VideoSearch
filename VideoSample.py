@@ -119,8 +119,8 @@ class VideoSample(BasicPart):
 
 
 if __name__ == "__main__":
-    vname         = "Data/Videos/20170701_tiny.mp4"
-    vsample       = VideoSample(isShow = True)
+    vname         = "Data/Videos/20170701_small.mp4"
+    vsample       = VideoSample(isShow = True, save_images=True)
     sceneQ, QLock = vsample.sample(vname)
     isSceneProcessOver = False
     # 跳出循环条件：处理结束且队列为空

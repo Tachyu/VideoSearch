@@ -133,6 +133,8 @@ class FaceRecog(BasicPart):
             landmark = self.aligner.align(image_gray, detect_face)
             landmarks.append(landmark)
             feat = self.identifier.extract_feature_with_crop(img, landmark)
+            # 降维至一维数组
+            feat = np.array(feat).flatten()
             feats.append(feat)
         return landmarks, faces, feats 
     

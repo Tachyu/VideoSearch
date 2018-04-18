@@ -235,8 +235,8 @@ def detect_scenes(cap, scene_manager, start_frame,
         #########
         
         for detector in scene_manager.detector_list:
-            cut_found = detector.process_frame(frames_read, im_scaled,
-                frame_metrics, scene_manager.scene_list) or cut_found
+            cut_found,save_both = detector.process_frame(frames_read, im_scaled,
+                frame_metrics, scene_manager.scene_list)
 
         if scene_manager.stats_writer:
             if not len(stats_file_keys) > 0:
@@ -267,39 +267,6 @@ def detect_scenes(cap, scene_manager, start_frame,
                 perf_last_framecount = frames_read
                 print("[PySceneDetect] Current Processing Speed: %5.1f FPS" % perf_curr_rate)
 
-        # save images on scene cuts/breaks if requested (scaled if using -df)
-        # if scene_manager.save_images:
-        #     num_scenes = len(scene_manager.scene_list)
-        #     if cut_found:
-        #         if not os.path.exists(scene_manager.save_image_prefix):
-        #             os.mkdir(scene_manager.save_image_prefix)
-        #             print('mkdir ' + scene_manager.save_image_prefix)
-        #         if scene_manager.save_image_prefix != '':
-        #             cur_image_path_prefix = os.path.join(scene_manager.save_image_prefix,image_path_prefix)
-        #         save_preview_images(
-        #             cur_image_path_prefix, im_cap, last_frame, len(scene_manager.scene_list))
-        #     # 将图片加入队列, 并加上描述（文件名）
-        #     # print(type(last_frame))
-        #     if isinstance(last_frame, (numpy.ndarray)):
-        #         pic_out_dict = {}
-        #         pic_out_dict['isIN'] = False
-        #         pic_out_dict['id'] = num_scenes  
-        #         # print(last_frame)
-        #         pic_out_dict['data'] = copy.deepcopy(last_frame)
-        #         scene_manager.pic_queue.put(pic_out_dict)
-                
-
-            
-        #     pic_in_dict = {}
-        #     pic_in_dict['isIN'] = True
-        #     pic_in_dict['id'] = num_scenes + 1  
-        #     # print(im_cap)            
-        #     pic_in_dict['data'] = copy.deepcopy(im_cap)
-        #     scene_manager.pic_queue.put(pic_in_dict)
-
-        #     del last_frame
-        #     last_frame = im_cap.copy()
-
         if cut_found: 
             num_scenes = len(scene_manager.scene_list) - 1
             if scene_manager.save_images:
@@ -311,7 +278,7 @@ def detect_scenes(cap, scene_manager, start_frame,
                 # print(cur_image_path_prefix)
 
                 save_preview_images(
-                    cur_image_path_prefix, im_cap, last_frame, num_scenes)
+                    cur_image_path_prefix, im_cap, last_frame, num_scenes, save_both)
 
             # 将图片加入队列, 并加上描述（文件名）
             # print(type(last_frame))
@@ -362,7 +329,7 @@ def detect_scenes(cap, scene_manager, start_frame,
     return (frames_read, frames_processed)
 
 
-def save_preview_images(image_path_prefix, im_curr, im_last, num_scenes):
+def save_preview_images(image_path_prefix, im_curr, im_last, num_scenes, save_both):
     """Called when a scene break occurs to save an image of the frames.
 
     Args:
@@ -372,8 +339,9 @@ def save_preview_images(image_path_prefix, im_curr, im_last, num_scenes):
         num_scenes: The index of the current/new scene (the IN frame).
     """
     # Save the last/previous frame, or the OUT frame of the last scene.
-    output_name = '%s.Scene-%03d-OUT.jpg' % (image_path_prefix, num_scenes)
-    cv2.imwrite(output_name, im_last)
+    if save_both:
+        output_name = '%s.Scene-%03d-OUT.jpg' % (image_path_prefix, num_scenes)
+        cv2.imwrite(output_name, im_last)
     # Save the current frame, or the IN frame of the new scene.
     output_name = '%s.Scene-%03d-IN.jpg' % (image_path_prefix, num_scenes+1)
     cv2.imwrite(output_name, im_curr)
