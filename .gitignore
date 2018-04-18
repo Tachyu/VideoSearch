@@ -17,5 +17,6 @@ Scene/jt/
 Config/*
 Data/Videos/Descriptions/*
 Data/Indexs/Content/*
+*.bin
 VideoSite/*
 
