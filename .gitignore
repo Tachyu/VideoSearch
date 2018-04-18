@@ -15,5 +15,7 @@ Scene/jt/
 *.ini
 *.pkl
 Config/*
+Data/Videos/Descriptions/*
+Data/Indexs/Content/*
 VideoSite/*
 
