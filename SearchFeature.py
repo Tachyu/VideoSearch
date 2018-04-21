@@ -13,9 +13,13 @@ import pickle
 
 class SearchFeature(BasicPart):
     def __init__(self, 
+        index_prefix='test',
         logfile=None, 
         isShow=False):
         BasicPart.__init__(self, logfile, isShow)
+        self.isfaceLoad = False
+        self.iscontLoad = False
+        self.index_prefix = index_prefix
         pass
     def read_config(self):
         self.dir                  = {}
@@ -121,6 +125,36 @@ class SearchFeature(BasicPart):
 
     def save_contentfeat_index(self, prefix, isSave=True):
         return self.__save_feat_index('content_feat', 'content_index', prefix, 'sfid', isSave)
+    
+    def load_index(self):
+        self.load_face_index('faces_index')
+        self.load_cont_index('content_index')
+        
+
+    def load_face_index(self,index_dir_name=None):
+        if self.isfaceLoad:
+            pass
+        else:
+            self.isfaceLoad = True
+            # 读文件
+            self.face_index = self.__create_index()
+            index_dir, id_dir = self.__get_index_id_path(self.index_prefix, index_dir_name)            
+            self.face_index.loadIndex(index_dir)
+            self.face_id_list = np.load(id_dir)
+        pass
+    
+    def load_cont_index(self,index_dir_name=None):
+        if self.iscontLoad:
+            pass
+        else:
+            self.iscontLoad = True
+            # 读文件
+            self.cont_index = self.__create_index()
+            index_dir, id_dir = self.__get_index_id_path(self.index_prefix, index_dir_name)            
+            self.cont_index.loadIndex(index_dir)
+            self.cont_id_list = np.load(id_dir)
+        pass
+
 
     def __query_index(self, query_feat, 
         index_dir_name, K=100, index_prefix=None, 
@@ -136,24 +170,24 @@ class SearchFeature(BasicPart):
                 return None
         else:
             # 读文件
-            index = self.__create_index()
-            index_dir, id_dir = self.__get_index_id_path(index_prefix, index_dir_name)            
-            index.loadIndex(index_dir)
-            id_list = np.load(id_dir)
-        result = self.__queryitem(id_list, index, query_feat, K)
+            pass
+        if index_dir_name == 'faces_index':
+            self.load_face_index(index_dir_name)
+            result = self.__queryitem(self.face_id_list, self.face_index, query_feat, K)
+        else:
+            self.load_cont_index(index_dir_name)
+            result = self.__queryitem(self.cont_id_list, self.cont_index, query_feat, K)
+            
         # self.lg(str(result))
         return result
 
-    def queryFace(self, facefeat, 
-        index_prefix=None, 
+    def queryFace(self, facefeat,  
         index=None, id_list=None):
-        print(index_prefix)
-        return self.__query_index(facefeat, 'faces_index', 100, index_prefix,index, id_list)
+        return self.__query_index(facefeat, 'faces_index', 100, self.index_prefix,index, id_list)
 
     def queryContent(self, contentfeat, 
-        index_prefix=None, 
         index=None, id_list=None):
-        return self.__query_index(contentfeat, 'content_index', 100, index_prefix,index, id_list)
+        return self.__query_index(contentfeat, 'content_index', 100, self.index_prefix,index, id_list)
         
 if __name__ == "__main__":
     sf = SearchFeature(isShow=True)

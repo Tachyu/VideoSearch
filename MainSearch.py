@@ -15,19 +15,26 @@ except ImportError:
 
 
 class MainSearch(BasicPart):
-    def __init__(self, prefix, imagename,max_len=10, logfile=None, isShow=False):
+    def __init__(self, prefix, imagename,max_len=20, logfile=None, isShow=False):
         BasicPart.__init__(self, logfile, isShow)
         self.imagename     = imagename
         self.facerecog     = FaceRecog(logfile, isShow)
         self.objectdetect  = ObjectDet(logfile, isShow, single_pic_process=True)
         self.dbhandler     = DBHandler()
-        self.SearchFeature = SearchFeature(logfile, isShow)
+        self.searchfeature = SearchFeature(prefix, logfile, isShow)
         self.max_len = max_len
         self.prefix = prefix
 
+    def load_index(self):
+        self.searchfeature.load_index()
+
+    def chaneg_image(self,imagename):
+        self.imagename     = imagename
+
     def read_config(self):
         # TODO:配置文件
-        self.thumb_prefix = '/var/www/html/thumbs/'  
+        self.thumb_prefix = '/var/www/html/SiteVideo/Data/thumbs/'  
+        self.thumb_web_prefix = 'Data/thumbs/'  
         self.thumb_size = '400x300'   
          
     
@@ -71,7 +78,7 @@ class MainSearch(BasicPart):
         # 只搜索第一个脸
         query_feat = pic_face_dic['feats'][0]
         # print(self.prefix)
-        query_result = self.searchfeature.queryFace(query_feat, index_prefix=self.prefix)
+        query_result = self.searchfeature.queryFace(query_feat)
 
         # TODO: 按照sceneid 去重
         sceenid_unique = set(query_result)
@@ -81,7 +88,7 @@ class MainSearch(BasicPart):
         image_obj_dic = self.objectdetect.extract_image_feature(self.imagename)
         query_feat = image_obj_dic['feat']
         query_feat = np.array(query_feat)
-        query_result = self.searchfeature.queryContent(query_feat, index_prefix=self.prefix)
+        query_result = self.searchfeature.queryContent(query_feat)
         # TODO: 按照sceneid 去重
         query_result_unique = set(query_result)
         return query_result
@@ -96,6 +103,7 @@ class MainSearch(BasicPart):
             full_videoname  = re['videoname']       
             videoname  = full_videoname.split("/")[-1]
             image_name = 'Data/Tmp/%s_s%d.jpg'%(videoname,sceneid)
+            timestamp = round(timestamp,1) + 0.3
             cmd = '''
             ffmpeg -ss %d -i %s -y -f image2 -vframes 1 -s 800x600 %s
             '''%(timestamp,full_videoname,image_name)
@@ -106,6 +114,7 @@ class MainSearch(BasicPart):
         return image_names
     
     def mkthumb(self, timestamp, full_videoname, image_name):
+        timestamp = round(timestamp) + 1
         cmd = '''
             ffmpeg -ss %d -i %s -y -f image2 -vframes 1 -s %s %s
             '''%(timestamp,full_videoname,self.thumb_size,image_name)
@@ -122,15 +131,15 @@ class MainSearch(BasicPart):
             cpdic['videopath'] = videopath
 
             # 截图
-            thumb_name = cpdic['video_name'] +"_s_"+str(cpdic['sceneid']) +".jpg"
-            thumb_name = os.path.join(self.thumb_prefix,thumb_name)
-            if os.path.exists(thumb_name):
+            thumb_name = cpdic['videoname'].split(".")[0] +"_s_"+str(cpdic['sceneid']) +".jpg"
+            thumb_path = os.path.join(self.thumb_prefix,thumb_name)
+            if os.path.exists(thumb_path):
                 pass
             else:
                 st = cpdic['starttime']
                 pt = cpdic['videopath']
-                self.mkthumb(st, pt, thumb_name)
-            cpdic['thumb'] = thumb_name
+                self.mkthumb(st, pt, thumb_path)
+            cpdic['thumb'] = self.thumb_web_prefix + thumb_name
             json_list.append(cpdic)
         return json_list
 
@@ -140,13 +149,14 @@ class MainSearch(BasicPart):
         """
         face_idlist = self.search_face()[:self.max_len]
         face_results = self.get_face_to_video_sceneinfo(face_idlist)
-
+        self.lg('FACE:' + str(len(face_idlist)))
         cont_idlist = self.search_pic()[:self.max_len]
         cont_results = self.get_content_to_video_sceneinfo(cont_idlist)
+        self.lg('CONT:' + str(len(cont_idlist)))
 
         result_json = {}
         result_json['face_scene_num'] = len(face_idlist)  
-        result_json['face_list'] = self.to_json(face_results)
+        result_json['face_scene_list'] = self.to_json(face_results)
 
         result_json['content_scene_num'] = len(cont_idlist)  
         result_json['content_scene_list'] = self.to_json(cont_results)
@@ -174,10 +184,12 @@ class SceneInfo:
         return hash(self.dic['sceneid'])
 
 if __name__ == '__main__':  
-    ms = MainSearch(prefix='test', max_len = 10, imagename="Data/Tmp/tmp.png",isShow=True)
+    ms = MainSearch(prefix='0825-1031-1030', max_len = 10, imagename="Data/Tmp/tmp.png",isShow=True)
+    # ms.create_indexs(True)
     # ms = MainSearch(prefix='test', imagename="Data/Tmp/tmp.png",isShow=True)
+    ms.load_index()
     print(ms.get_search_result_JSON())
-    # # ms.create_indexs(True)
+    
     # idlist = ms.search_face()[:10]
     # results = ms.get_face_to_video_sceneinfo(idlist)  
     # ms.show_pics(results)

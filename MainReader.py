@@ -80,7 +80,7 @@ class MainReader(BasicPart):
         from FaceRecog import FaceRecog
         process_line.append(FaceRecog(isShow=self.isShow, picShow=False))
 
-        self.videosample = VideoSample(isShow = self.isShow, save_images = True)
+        self.videosample = VideoSample(isShow = self.isShow, save_images = False)
         i_queue, i_lock  = self.videosample.sample(self.videoinfo['name'])
         
         self.s_time = time.time()
@@ -242,9 +242,10 @@ class MainReader(BasicPart):
 if __name__ == "__main__":
     # main("Data/Videos/20170701_small.mp4",isShow=False).start()
     videoinfo = {}
-    videoinfo['name'] = "Data/Videos/20170825.mp4"
+    date = '20171031'
+    videoinfo['name'] = "Data/Videos/%s.mp4"%date
     des = ''
-    with open('Data/Videos/Descriptions/20170825.txt','r') as df:
+    with open('Data/Videos/Descriptions/%s.txt'%date,'r') as df:
         des = df.read()
     videoinfo['descrption'] = des
     MainReader(videoinfo,isShow=True).start()

@@ -16,6 +16,8 @@ import numpy as np
 from keras import backend as K
 from keras.models import load_model
 
+import tensorflow as tf
+
 
 from ObjectDetect.yad2k.yad2k.models.keras_yolo import yolo_eval, yolo_head
 import pickle
@@ -105,7 +107,8 @@ class ObjectDet(BasicPart):
             self.anchors = [float(x) for x in self.anchors.split(',')]
             self.anchors = np.array(self.anchors).reshape(-1, 2)
 
-        # Load Model    
+        # Load Model   
+
         self.yolo_model = load_model(self.model_path)
         # Verify model, anchors, and classes are compatible
         self.num_classes = len(self.class_names)

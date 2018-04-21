@@ -327,10 +327,11 @@ class ContentDetector(SceneDetector):
                         _,_,_,value = self.calculate_delta(self.begin_hsv, self.last_hsv)
                         if value > self.threshold/1.07 and value >= delta_hsv_avg:
                             # save both
-                            print("SAVE "+str(delta_hsv_avg) + " : " +str(value))
+                            # print("SAVE "+str(delta_hsv_avg) + " : " +str(value))
                             save_both = True
                         else:
-                            print("NO-SAVE "+str(delta_hsv_avg) + " : " +str(value))
+                            pass
+                            # print("NO-SAVE "+str(delta_hsv_avg) + " : " +str(value))
                             
                     self.begin_hsv = curr_hsv
                     scene_list.append(frame_num)
