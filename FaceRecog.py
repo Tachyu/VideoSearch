@@ -83,34 +83,7 @@ class FaceRecog(BasicPart):
         pic_face_dic['feats']     = feats
         return pic_face_dic
 
-    def detect(self):
-        '''
-         返回一个字典数组：长度等于图片数。例如：
-         [
-             {
-                 'name':'1.jpg'，
-                 'features':[[1,23,...],[2,3,....]],
-                 'landmarks':[[1,2,3,4],[5,6,7,8]]                 
-              },...
-         ]
-        '''
-        pic_dic_list = []
-        for pic in self.images_name:
-            image = Image.open(pic).convert('RGB')
-            lands, faces, feats = self.__extract_features(image) 
-            if self.isShow:
-                logging.info("detecting %s: find %d faces"%(pic, len(lands))) 
-                if self.picShow:                
-                    draw = ImageDraw.Draw(image)
-                    for i, face in enumerate(faces):
-                        draw.rectangle([face.left, face.top, face.right, face.bottom], outline='red') 
-                    image.show()
-            pic_dic = {}
-            pic_dic['name']      = pic
-            pic_dic['landmarks'] = lands
-            pic_dic['feats']     = feats
-            pic_dic_list.append(pic_dic)
-        return pic_dic_list
+
 
     def extract_image_face_feature(self, imagename):
         

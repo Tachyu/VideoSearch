@@ -1,6 +1,6 @@
 import subprocess
 
-from SearchFeature import SearchFeature
+from FeatureIndex import FeatureIndex
 from BasicPart import BasicPart
 from FaceRecog import FaceRecog
 from ObjectDet import ObjectDet
@@ -21,7 +21,7 @@ class MainSearch(BasicPart):
         self.facerecog     = FaceRecog(logfile, isShow)
         self.objectdetect  = ObjectDet(logfile, isShow, single_pic_process=True)
         self.dbhandler     = DBHandler()
-        self.searchfeature = SearchFeature(prefix, logfile, isShow)
+        self.searchfeature = FeatureIndex(prefix, logfile, isShow)
         self.max_len = max_len
         self.prefix = prefix
 

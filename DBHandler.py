@@ -235,15 +235,39 @@ class DBHandler:
             "public"."VideoId"."VideoId" = %s 
             AND "public"."VideoInfo"."VideoId" = "public"."VideoId"."VideoId";
         '''
-        results                  = self.__excutesql_table(sql, [videoid])
-        result_dic               = {}
-        result_dic['videoid']    = results[0][0]        
+        results                   = self.__excutesql_table(sql, [videoid])
+        result_dic                = {}
+        result_dic['videoid']     = results[0][0]        
         result_dic['videoname']   = results[0][1]
-        result_dic['length']     = results[0][2]
-        result_dic['addtime']    = results[0][3].strftime('%Y-%m-%d %H:%M:%S')        
+        result_dic['length']      = results[0][2]
+        result_dic['addtime']     = results[0][3].strftime('%Y-%m-%d %H:%M:%S')        
         result_dic['description'] = results[0][4]
         return result_dic   
-        
+    
+    def queryPersonByName(self,name='*'):
+        sql = '''
+        SELECT
+            "public"."PersonInfo"."id",
+            "public"."PersonInfo"."name"
+        FROM
+            "public"."PersonInfo"
+        '''
+        if name != '*':
+            sql +='''
+            WHERE
+            "public"."PersonInfo"."name" = %s;'''
+            results = self.__excutesql_table(sql, [name])
+            
+        else:
+            sql += ";"
+            results = self.__excutesql_table(sql, [])
+        return results
+
+
+
+    def addmanyPesons(names):
+        return self.__addmany('PersonInfo','id',[names])
+
     def commit(self):
         """将视频信息提交数据库
         """
@@ -277,12 +301,15 @@ if __name__ == "__main__":
     # result = handler.addmanyFaceFeats([37,37,37],[1,1,1])  
     # result = handler.addmanyPicFeats([37,39,41])      
     # print(result)
-    info = handler.search_scene_video_info_by_faceid(339)
-    print(info)
+    # info = handler.search_scene_video_info_by_faceid(339)
+    # print(info)
 
-    info = handler.search_scene_video_info_by_picid(101)
-    print(info)
+    # info = handler.search_scene_video_info_by_picid(101)
+    # print(info)
 
-    info = handler.search_videoinfo_by_videoid(88)
+    # info = handler.search_videoinfo_by_videoid(88)
+    # print(info)
+
+    info = handler.queryPersonByName()
     print(info)
     # infos  = handler.commit()
