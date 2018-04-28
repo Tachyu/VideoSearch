@@ -125,6 +125,7 @@ class PersonFace(BasicPart):
         
         Arguments:
             facefeat {data} -- 待确定的人脸特征
+            -1, unknown 未识别人物
         """
         # 首先进行query
         results, distance = self.fi.queryPerson(facefeat)

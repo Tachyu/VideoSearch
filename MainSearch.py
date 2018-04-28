@@ -35,9 +35,10 @@ class MainSearch(BasicPart):
 
     def read_config(self):
         # TODO:配置文件
-        self.thumb_prefix = '/var/www/html/SiteVideo/Data/thumbs/'  
-        self.thumb_web_prefix = 'Data/thumbs/'  
-        self.thumb_size = '400x300'   
+        self.thumb_prefix = self.config.get("search","thumb_prefix")
+        self.thumb_web_prefix = self.config.get("search","thumb_web_prefix")
+        self.thumb_size = self.config.get("search","thumb_size")  
+        self.personinfo_dir  = self.config.get("datadir","person_info")
          
     
     def __get_db_info(self, id_type, id_list):
@@ -156,6 +157,19 @@ class MainSearch(BasicPart):
         videoids = [item.dic['videoid'] for item in resultlist]
         return sceneids, videoids
 
+    def read_person_info(self, pid):
+        """读人物信息文件
+        
+        Arguments:
+            pid {int} -- 人物id
+        """
+        content = ''
+        filename = self.personinfo_dir + '/' + str(pid) + '.txt'
+        with open(filename, 'r') as f:
+            content = f.read()
+        return content
+
+
     def get_search_result_JSON(self):
         """返回json格式的检索
         TODO: 完成物体搜索结果
@@ -182,10 +196,19 @@ class MainSearch(BasicPart):
         both_scene_list = []
         # both_scene_list = set(face_results) & set(cont_results)
         both_video_list = set(fvids) | set(cvids)
-
+        result_json['both_video_num']  = len(both_video_list)
         result_json['both_scene_num']  = len(both_scene_list)
         result_json['both_scene_list'] = self.to_json(both_scene_list)
 
+        # 识别人物
+        pid, pname = self.personface.idenity(self.imagename)
+        # 读取存储的人物简介
+        pinfo = ''
+        if pid != -1:
+            pinfo = self.read_person_info(pid)
+        result_json['personid'] = pid
+        result_json['personname'] = pname
+        result_json['personinfo'] = pinfo
         # 物体集合
         result_json['object_num']  = len(object_list)
         result_json['object_list'] = object_list

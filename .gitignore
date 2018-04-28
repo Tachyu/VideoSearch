@@ -19,6 +19,7 @@ Config/*
 Data/Videos/Descriptions/*
 Data/Videos/Tmp/*
 Data/Videos/*
+Data/Info/*
 Data/Indexs/Content/*
 *.bin
 VideoSite/*
