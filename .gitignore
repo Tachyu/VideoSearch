@@ -1,5 +1,6 @@
 *.png
 *.jpg
+*.JPG
 *.mp4
 *.h5
 *.weight
@@ -16,7 +17,8 @@ Scene/jt/
 *.pkl
 Config/*
 Data/Videos/Descriptions/*
-Data/Videos/Tmp
+Data/Videos/Tmp/*
+Data/Videos/*
 Data/Indexs/Content/*
 *.bin
 VideoSite/*

@@ -39,7 +39,6 @@ class FeatureIndex(BasicPart):
         self.dir['faces_index']   = self.config.get('datadir','faces_index')
         self.dir['content_index'] = self.config.get('datadir','content_index')
 
-        # TODO：修改config.ini
         self.dir['person_index']  = self.config.get('datadir','person_index')
         
         
@@ -77,11 +76,12 @@ class FeatureIndex(BasicPart):
         nbrs = index.knnQueryBatch(item, 
         k = K, 
         num_threads = self.num_threads)
-        # print(nbrs)
+
         targets = nbrs[0][0]
+        distance= nbrs[0][1]
         result = [id_list[int(i)] for i in targets]
         # TODO: 返回距离
-        return result
+        return result, distance
 
     def __read_featfile(self, id_name, path):
         """读特征文件，返回特征数据以及特征编号列表
@@ -138,7 +138,7 @@ class FeatureIndex(BasicPart):
         index_path= self.dir[index_type]
         index_dir = os.path.join(index_path, index_file_name) 
 
-        id_file_name = index_prefix+"_%s.npy"%index_dir_name
+        id_file_name = index_prefix+"_%s.npy"%index_type
         id_dir = os.path.join(index_path, id_file_name)
         return index_dir, id_dir
 
@@ -211,7 +211,7 @@ class FeatureIndex(BasicPart):
         index              = self.__add_dataToindex(index,person_feats)
     
         # save
-        index_dir, id_dir = self.__get_index_id_path(index_prefix, 'person_index')
+        index_dir, id_dir = self.__get_index_id_path(self.index_prefix, 'person_index')
         index.saveIndex(index_dir)
 
         # 保存id文件
@@ -289,15 +289,15 @@ class FeatureIndex(BasicPart):
             pass
         if index_type == 'faces_index':
             self.load_face_index()
-            result = self.__queryitem(self.face_id_list, self.face_index, query_feat, K)
+            result, distance = self.__queryitem(self.face_id_list, self.face_index, query_feat, K)
         elif index_type == 'content_index':
             self.load_cont_index()
-            result = self.__queryitem(self.cont_id_list, self.cont_index, query_feat, K)
+            result, distance = self.__queryitem(self.cont_id_list, self.cont_index, query_feat, K)
         else:
             self.load_person_index()
-            result = self.__queryitem(self.person_id_list, self.person_index, query_feat, K)
+            result, distance = self.__queryitem(self.person_id_list, self.person_index, query_feat, K)
         # self.lg(str(result))
-        return result
+        return result,distance
 
     def queryFace(self, facefeat,  
         index=None, id_list=None):

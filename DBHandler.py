@@ -177,11 +177,11 @@ class DBHandler:
 
     def search_scene_video_info_by_faceid(self, faceid):
         '''
-        result_dic['sceneid']   = results[0][0]
-        result_dic['videoid']   = results[0][1]
-        result_dic['videoname'] = results[0][2]
-        result_dic['starttime'] = results[0][3]
-        result_dic['length']    = results[0][4]
+        ['sceneid']
+        ['videoid']
+        ['videoname']
+        ['starttime']
+        ['length']
         '''
         sql = '''
         SELECT
@@ -263,9 +263,22 @@ class DBHandler:
             results = self.__excutesql_table(sql, [])
         return results
 
+    def queryPersonById(self,id):
+        sql = '''
+        SELECT
+            "public"."PersonInfo"."id",
+            "public"."PersonInfo"."name"
+        FROM
+            "public"."PersonInfo"
+        '''
+        sql +='''
+        WHERE
+        "public"."PersonInfo"."id" = %s;'''
+        results = self.__excutesql_table(sql, [id])
+        return results
 
 
-    def addmanyPesons(names):
+    def addmanyPerson(self, names):
         return self.__addmany('PersonInfo','id',[names])
 
     def commit(self):

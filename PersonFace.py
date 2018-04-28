@@ -8,6 +8,7 @@ import time
 import copy
 import cv2
 
+import pandas as pd
 import numpy as np
 from BasicPart import BasicPart
 
@@ -37,7 +38,7 @@ class PersonFace(BasicPart):
         self.picShow  = picShow
         from DBHandler import DBHandler
         self.handler = DBHandler()        
-        # self.initFR()
+        self.initFR()
         # self.initFI()        
 
     def initFI(self):
@@ -57,7 +58,8 @@ class PersonFace(BasicPart):
         """读配置文件
         """
         self.dir = {}
-        self.thresh = self.config.getint('facerecog','threshold')
+        self.maxdistance         = self.config.getint('facerecog','max_distance')
+        self.thresh              = self.config.getint('facerecog','threshold')
         self.dir['faces']        = self.config.get('datadir','faces')
         self.dir['faces_feat']   = self.config.get('datadir','faces_feat')
         self.dir['faces_sample'] = self.config.get('datadir','faces_sample')
@@ -65,7 +67,7 @@ class PersonFace(BasicPart):
     def storePersonToDB(self):
         """将人物存到PersonInfo表，返回id
         """
-        self.person_ids = self.handler.addmanyPesons(self.person_names)
+        self.person_ids = self.handler.addmanyPerson(self.person_names)
 
     def index_person(self):
         """对sample文件夹下所有人物人脸图片建立索引
@@ -79,11 +81,10 @@ class PersonFace(BasicPart):
         
         for index, person_name in enumerate(self.person_names):
             # 每一个人物对应一个文件夹
-            full_path = sample_dir + '/' + person_name
+            full_path = self.dir['faces_sample'] + '/' + person_name
 
             pic_list = os.listdir(full_path)
             num_faces = len(pic_list)
-            self.lg('detecting %s: find %d pictures'%(person_name, num_faces))
             for face_pic in pic_list:
                 face_pic = full_path + '/' + face_pic
                 pic_face_dic = self.fr.extract_image_face_feature(face_pic)
@@ -93,7 +94,7 @@ class PersonFace(BasicPart):
         
         # 建立索引
         self.initFI()
-        self.fi.create_person_index(self.person_feats, self.person_ids)
+        self.fi.create_person_index(self.person_pic_feats, self.person_pic_ids)
 
     def setFeatureIndex(self, fi):
         """设置FI对象，用于查询时，从外部导入已载入索引的索引对象
@@ -103,6 +104,22 @@ class PersonFace(BasicPart):
         """
         self.fi = fi
 
+    def identify_pic_person(self, imagename):
+        """确定图片中人物名字以及id
+        
+        Arguments:
+            imagename {string} -- 图片名
+        
+        Returns:
+            personid, personname
+        """
+        face_dic = self.fr.extract_image_face_feature(imagename)
+
+        personid, personname = self.idenity(face_dic['feats'][0])
+
+        return personid, personname
+        # print(result)
+
     def idenity(self, facefeat):
         """确定人物身份，返回人物名及人物id
         
@@ -110,17 +127,26 @@ class PersonFace(BasicPart):
             facefeat {data} -- 待确定的人脸特征
         """
         # 首先进行query
-        results = self.fi.queryPerson(facefeat)
+        results, distance = self.fi.queryPerson(facefeat)
 
-        # 确定人物身份:
-        # 加权计算每个人物的分数[0.55, 0.5, 0.45, 0.4, 0.35,...]
-        score_weight = [0.55 - i * 0.05 for i in range(10)]
-        score        = [w * s for s in results]
-        
+        # 若高于最远距离,则为未知人物,返回-1,''
+        if distance[0] > self.maxdistance:
+            personid = -1
+            personname = 'unknown'
+        else:            
+            # 确定人物身份:
+            # kmean
+            max_count_id = pd.value_counts(results, sort=True).index[0]
         # 计算每个结果的得分
-        
-
+        personid = int(max_count_id)
+        personname = self.handler.queryPersonById(personid)[0][1]
         return personid, personname
 
 if __name__ == '__main__':
-    PersonFace(isShow=True).index_person()
+    from FeatureIndex import FeatureIndex
+    pf = PersonFace(True)
+    fi = FeatureIndex(True)
+    fi.load_person_index()
+    pf.setFeatureIndex(fi)
+    pf.identify_pic_person('1.jpg')
+    # PersonFace(isShow=True).index_person()

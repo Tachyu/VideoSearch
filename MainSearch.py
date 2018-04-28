@@ -78,7 +78,7 @@ class MainSearch(BasicPart):
         # 只搜索第一个脸
         query_feat = pic_face_dic['feats'][0]
         # print(self.prefix)
-        query_result = self.searchfeature.queryFace(query_feat)
+        query_result,_ = self.searchfeature.queryFace(query_feat)
 
         # TODO: 按照sceneid 去重
         sceenid_unique = set(query_result)
@@ -88,7 +88,7 @@ class MainSearch(BasicPart):
         image_obj_dic = self.objectdetect.extract_image_feature(self.imagename)
         query_feat = image_obj_dic['feat']
         query_feat = np.array(query_feat)
-        query_result = self.searchfeature.queryContent(query_feat)
+        query_result,_ = self.searchfeature.queryContent(query_feat)
         # TODO: 按照sceneid 去重
         query_result_unique = set(query_result)
         return query_result
@@ -119,6 +119,12 @@ class MainSearch(BasicPart):
             ffmpeg -ss %d -i %s -y -f image2 -vframes 1 -s %s %s
             '''%(timestamp,full_videoname,self.thumb_size,image_name)
         a = subprocess.getoutput(cmd)
+
+    def searchKeywords(self, text):
+        """使用solr搜索关键词
+        """
+
+
 
     def to_json(self, result_list):
         json_list = []
