@@ -5,6 +5,7 @@ from BasicPart import BasicPart
 from FaceRecog import FaceRecog
 from ObjectDet import ObjectDet
 from DBHandler import DBHandler
+from PersonFace import PersonFace
 import os,json
 
 try:
@@ -12,7 +13,6 @@ try:
     import numpy as np
 except ImportError:
     raise ImportError('Pillow can not be found!')
-
 
 class MainSearch(BasicPart):
     def __init__(self, prefix, imagename,max_len=20, logfile=None, isShow=False):
@@ -22,13 +22,15 @@ class MainSearch(BasicPart):
         self.objectdetect  = ObjectDet(logfile, isShow, single_pic_process=True)
         self.dbhandler     = DBHandler()
         self.searchfeature = FeatureIndex(prefix, logfile, isShow)
+        self.personface    = PersonFace(logfile, isShow=isShow)
         self.max_len = max_len
         self.prefix = prefix
 
     def load_index(self):
         self.searchfeature.load_index()
+        self.personface.setFeatureIndex(self.searchfeature)
 
-    def chaneg_image(self,imagename):
+    def set_image(self,imagename):
         self.imagename     = imagename
 
     def read_config(self):
@@ -87,11 +89,12 @@ class MainSearch(BasicPart):
     def search_pic(self):
         image_obj_dic = self.objectdetect.extract_image_feature(self.imagename)
         query_feat = image_obj_dic['feat']
+        tag_name   = image_obj_dic['tag_name']        
         query_feat = np.array(query_feat)
         query_result,_ = self.searchfeature.queryContent(query_feat)
         # TODO: 按照sceneid 去重
         query_result_unique = set(query_result)
-        return query_result
+        return query_result,tag_name
 
         # print(result)
     def show_pics(self, results):
@@ -123,9 +126,8 @@ class MainSearch(BasicPart):
     def searchKeywords(self, text):
         """使用solr搜索关键词
         """
-
-
-
+        pass
+        
     def to_json(self, result_list):
         json_list = []
         # 1. 转换文件名到路径，2.同时生成略缩图：400*300
@@ -149,6 +151,11 @@ class MainSearch(BasicPart):
             json_list.append(cpdic)
         return json_list
 
+    def extrace_ids(self, resultlist):
+        sceneids = [item.dic['sceneid'] for item in resultlist]
+        videoids = [item.dic['videoid'] for item in resultlist]
+        return sceneids, videoids
+
     def get_search_result_JSON(self):
         """返回json格式的检索
         TODO: 完成物体搜索结果
@@ -156,7 +163,9 @@ class MainSearch(BasicPart):
         face_idlist = self.search_face()[:self.max_len]
         face_results = self.get_face_to_video_sceneinfo(face_idlist)
         self.lg('FACE:' + str(len(face_idlist)))
-        cont_idlist = self.search_pic()[:self.max_len]
+        
+        cont_idlist, object_list = self.search_pic()
+        cont_idlist = cont_idlist[:self.max_len]
         cont_results = self.get_content_to_video_sceneinfo(cont_idlist)
         self.lg('CONT:' + str(len(cont_idlist)))
 
@@ -167,7 +176,21 @@ class MainSearch(BasicPart):
         result_json['content_scene_num'] = len(cont_idlist)  
         result_json['content_scene_list'] = self.to_json(cont_results)
         
-        return json.dumps(result_json)
+        # 交集
+        fsids, fvids = self.extrace_ids(face_results)
+        csids, cvids = self.extrace_ids(cont_results)
+        both_scene_list = []
+        # both_scene_list = set(face_results) & set(cont_results)
+        both_video_list = set(fvids) | set(cvids)
+
+        result_json['both_scene_num']  = len(both_scene_list)
+        result_json['both_scene_list'] = self.to_json(both_scene_list)
+
+        # 物体集合
+        result_json['object_num']  = len(object_list)
+        result_json['object_list'] = object_list
+
+        return result_json
 
 
 
@@ -190,7 +213,7 @@ class SceneInfo:
         return hash(self.dic['sceneid'])
 
 if __name__ == '__main__':  
-    ms = MainSearch(prefix='0825-1031-1030', max_len = 10, imagename="Data/Tmp/tmp.png",isShow=True)
+    ms = MainSearch(prefix='0825-1031-1030', max_len = 10, imagename="Data/Tmp/1.jpg",isShow=True)
     # ms.create_indexs(True)
     # ms = MainSearch(prefix='test', imagename="Data/Tmp/tmp.png",isShow=True)
     ms.load_index()

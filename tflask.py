@@ -68,24 +68,34 @@ def uploadpic():
     # picdata = request.files['image']
     # print(request)
     # print(request.files['file'])
-    prefix = 'Data/Tmp/'
+    time_start=time.time();
+    # prefix = 'Data/Tmp/'
+    prefix = '/var/www/html/SiteVideo/upload/'
+    web_prefix = 'upload/'    
     picdata = request.files['file']
     
-    pic_name = picdata.filename
-    img_path = os.path.join(prefix,secure_filename(pic_name))
+    pic_name = secure_filename(picdata.filename)
+    img_path = os.path.join(prefix,pic_name)
     picdata.save(img_path)
     time.sleep(1)
     with g.as_default():
-        ms.chaneg_image(img_path)
+        ms.set_image(img_path)
         testjson = ms.get_search_result_JSON()
+    time_stop=time.time();
+    
+    testjson['querytime'] = 1000* (time_stop-time_start)   
+    testjson['uploadpicture'] = web_prefix + pic_name
 
+
+    json_str = json.dumps(testjson)
     ud = str(uuid.uuid4())
     js_name = 'Data/Videos/UUID/' + ud + ".json"
+    print(js_name)
     message = {}
     message['jsname'] = ud
     s = 'H:/xampp/htdocs/SiteVideo/'
     with open('/var/www/html/SiteVideo/'+js_name,'w',encoding='utf8') as js:
-        js.write(testjson)
+        js.write(json_str)
     # basedir = os.path.abspath(os.path.dirname(__file__))
 
     # print(picdata.filename)
