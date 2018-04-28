@@ -199,6 +199,8 @@ class FeatureIndex(BasicPart):
         """
         self.load_face_index()
         self.load_cont_index()
+        self.load_person_index()
+        
 
     def create_person_index(self, person_feats, person_ids):
         """创建人物特征索引并保存，返回已经载入数据的Index对象

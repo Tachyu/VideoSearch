@@ -14,7 +14,7 @@ import time
 
 g = tf.Graph()
 with g.as_default():
-    ms = MainSearch(prefix='0825-1031-1030', max_len = 20, imagename="Data/Tmp/tmp.png",isShow=True)
+    ms = MainSearch(prefix='0825-1031-1030', max_len = 120, imagename="Data/Tmp/tmp.png",isShow=True)
     ms.load_index()
     print('Ready Let`s GO!')
 
@@ -90,7 +90,7 @@ def uploadpic():
     json_str = json.dumps(testjson)
     ud = str(uuid.uuid4())
     js_name = 'Data/Videos/UUID/' + ud + ".json"
-    print(js_name)
+    # print(json_str)
     message = {}
     message['jsname'] = ud
     s = 'H:/xampp/htdocs/SiteVideo/'

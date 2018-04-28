@@ -201,7 +201,8 @@ class MainSearch(BasicPart):
         result_json['both_scene_list'] = self.to_json(both_scene_list)
 
         # 识别人物
-        pid, pname = self.personface.idenity(self.imagename)
+        print(self.imagename)
+        pid, pname = self.personface.identify_pic_person(self.imagename)
         # 读取存储的人物简介
         pinfo = ''
         if pid != -1:

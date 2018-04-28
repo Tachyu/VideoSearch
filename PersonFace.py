@@ -129,7 +129,6 @@ class PersonFace(BasicPart):
         """
         # 首先进行query
         results, distance = self.fi.queryPerson(facefeat)
-
         # 若高于最远距离,则为未知人物,返回-1,''
         if distance[0] > self.maxdistance:
             personid = -1
@@ -138,9 +137,9 @@ class PersonFace(BasicPart):
             # 确定人物身份:
             # kmean
             max_count_id = pd.value_counts(results, sort=True).index[0]
-        # 计算每个结果的得分
-        personid = int(max_count_id)
-        personname = self.handler.queryPersonById(personid)[0][1]
+            # 计算每个结果的得分
+            personid = int(max_count_id)
+            personname = self.handler.queryPersonById(personid)[0][1]
         return personid, personname
 
 if __name__ == '__main__':
@@ -149,5 +148,7 @@ if __name__ == '__main__':
     fi = FeatureIndex(True)
     fi.load_person_index()
     pf.setFeatureIndex(fi)
-    pf.identify_pic_person('1.jpg')
+    pid, name = pf.identify_pic_person('/var/www/html/SiteVideo/upload/cap_20171031_001213_01.jpg')
+    print(pid)
+    print(name)    
     # PersonFace(isShow=True).index_person()
