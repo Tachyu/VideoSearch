@@ -235,7 +235,7 @@ def detect_scenes(cap, scene_manager, start_frame,
         #########
         
         for detector in scene_manager.detector_list:
-            cut_found,save_both = detector.process_frame(frames_read, im_scaled,
+            cut_found,save_both,last_hsv,curr_hsv = detector.process_frame(frames_read, im_scaled,
                 frame_metrics, scene_manager.scene_list)
 
         if scene_manager.stats_writer:
@@ -286,13 +286,15 @@ def detect_scenes(cap, scene_manager, start_frame,
                 pic_out_dict = {}
                 pic_out_dict['isIN'] = False
                 pic_out_dict['id'] = num_scenes  
+                pic_out_dict['hsv'] = last_hsv                  
                 # print(last_frame)
                 pic_out_dict['data'] = copy.deepcopy(last_frame)
                 scene_manager.pic_queue.put(pic_out_dict)
                
             pic_in_dict = {}
             pic_in_dict['isIN'] = True
-            pic_in_dict['id'] = num_scenes + 1  
+            pic_in_dict['id'] = num_scenes + 1 
+            pic_in_dict['hsv'] = curr_hsv                               
             # print(im_cap)            
             pic_in_dict['data'] = copy.deepcopy(im_cap)
             scene_manager.pic_queue.put(pic_in_dict)

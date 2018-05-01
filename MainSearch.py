@@ -15,7 +15,7 @@ except ImportError:
     raise ImportError('Pillow can not be found!')
 
 class MainSearch(BasicPart):
-    def __init__(self, prefix, imagename,max_len=20, logfile=None, isShow=False):
+    def __init__(self, prefix, imagename,max_len=1000, logfile=None, isShow=False):
         BasicPart.__init__(self, logfile, isShow)
         self.imagename     = imagename
         self.facerecog     = FaceRecog(logfile, isShow)
@@ -25,6 +25,19 @@ class MainSearch(BasicPart):
         self.personface    = PersonFace(logfile, isShow=isShow)
         self.max_len = max_len
         self.prefix = prefix
+        # 默认阈值
+        self.setThreshold(800, 1000)      
+
+    def setThreshold(self, faceThreshhold, contentThreshold):
+        """设置阈值,阈值越大搜索到的结果更多
+        
+        Arguments:
+            faceThreshhold {int} -- 脸部搜索阈值
+            contentThreshold {int} -- 内容搜索阈值
+        """
+        self.faceThreshhold = faceThreshhold
+        self.contentThreshold = contentThreshold
+
 
     def load_index(self):
         self.searchfeature.load_index()
@@ -70,6 +83,23 @@ class MainSearch(BasicPart):
         self.searchfeature.save_facefeat_index(self.prefix, isSave=isSave)
         self.searchfeature.save_contentfeat_index(self.prefix, isSave=isSave)
 
+    def selectByDistance(self, distance, thresh):
+        """按照阈值选择符合条件的结果
+        
+        Arguments:
+            distance {list} -- 距离列表
+            thresh {int} -- 距离阈值            
+        """
+        max_item = 0
+        for index, dist in enumerate(distance):
+            if dist >= thresh:
+                max_item = index
+                break
+            else:
+                max_item = index 
+        # 截取
+        return max_item
+
     def search_face(self):
         pic_face_dic = self.facerecog.extract_image_face_feature(self.imagename)
         num_faces = len(pic_face_dic['feats'])
@@ -81,21 +111,28 @@ class MainSearch(BasicPart):
         # 只搜索第一个脸
         query_feat = pic_face_dic['feats'][0]
         # print(self.prefix)
-        query_result,_ = self.searchfeature.queryFace(query_feat)
-
-        # TODO: 按照sceneid 去重
+        query_result,distance = self.searchfeature.queryFace(query_feat)
+        # 选取
+        max_index = self.selectByDistance(distance, self.faceThreshhold)
+        query_result = query_result[:max_index]
+        distance = distance[:max_index]
         sceenid_unique = set(query_result)
-        return query_result
+        return query_result, distance
 
     def search_pic(self):
         image_obj_dic = self.objectdetect.extract_image_feature(self.imagename)
         query_feat = image_obj_dic['feat']
         tag_name   = image_obj_dic['tag_name']        
         query_feat = np.array(query_feat)
-        query_result,_ = self.searchfeature.queryContent(query_feat)
+        query_result,distance = self.searchfeature.queryContent(query_feat)
+        # 选取
+        max_index = self.selectByDistance(distance, self.contentThreshold)
+        query_result = query_result[:max_index]
+        distance = distance[:max_index]
+
         # TODO: 按照sceneid 去重
         query_result_unique = set(query_result)
-        return query_result,tag_name
+        return query_result,tag_name,distance
 
         # print(result)
     def show_pics(self, results):
@@ -127,6 +164,9 @@ class MainSearch(BasicPart):
     def searchKeywords(self, text):
         """使用solr搜索关键词
         """
+        url = 'http://*IP*:8985/solr/*集合名*/select?q=*字段名*:"\%s"&wt=json&indent=true'%item
+        r = requests.get(url, verify = False)
+        r = r.json()['response']['numFound']
         pass
         
     def to_json(self, result_list):
@@ -174,11 +214,11 @@ class MainSearch(BasicPart):
         """返回json格式的检索
         TODO: 完成物体搜索结果
         """
-        face_idlist = self.search_face()[:self.max_len]
+        face_idlist, face_distance = self.search_face()[:self.max_len]
         face_results = self.get_face_to_video_sceneinfo(face_idlist)
         self.lg('FACE:' + str(len(face_idlist)))
         
-        cont_idlist, object_list = self.search_pic()
+        cont_idlist, object_list, cont_distance = self.search_pic()
         cont_idlist = cont_idlist[:self.max_len]
         cont_results = self.get_content_to_video_sceneinfo(cont_idlist)
         self.lg('CONT:' + str(len(cont_idlist)))
@@ -186,9 +226,11 @@ class MainSearch(BasicPart):
         result_json = {}
         result_json['face_scene_num'] = len(face_idlist)  
         result_json['face_scene_list'] = self.to_json(face_results)
+        result_json['face_dist_list'] = face_distance       
 
         result_json['content_scene_num'] = len(cont_idlist)  
         result_json['content_scene_list'] = self.to_json(cont_results)
+        result_json['content_dist_list'] = cont_distance       
         
         # 交集
         fsids, fvids = self.extrace_ids(face_results)
@@ -239,6 +281,7 @@ class SceneInfo:
 if __name__ == '__main__':  
     ms = MainSearch(prefix='0825-1031-1030', max_len = 10, imagename="Data/Tmp/1.jpg",isShow=True)
     # ms.create_indexs(True)
+    ms.setThreshold(800,800)
     # ms = MainSearch(prefix='test', imagename="Data/Tmp/tmp.png",isShow=True)
     ms.load_index()
     print(ms.get_search_result_JSON())

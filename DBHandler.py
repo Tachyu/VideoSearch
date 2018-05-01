@@ -279,7 +279,27 @@ class DBHandler:
 
 
     def addmanyPerson(self, names):
-        return self.__addmany('PersonInfo','id',[names])
+        # 先查询是否数据库中已有人名,然后再添加没有的人名
+        need_add_names = []
+        results    = []
+        new_index  = []
+        for index, name in enumerate(names):
+            query = self.queryPersonByName(name)
+            if len(query) == 0:
+                new_index.append(index)                
+                need_add_names.append(name)
+            else:
+                results.append(query[0][0])
+        add_ids = []
+        if len(need_add_names) != 0:
+            add_ids = self.__addmany('PersonInfo','id',[need_add_names])
+        
+        for index, add_id in enumerate(add_ids):
+            results.insert(new_index[index], add_id)
+
+        print(results)
+        return results    
+        # return self.__addmany('PersonInfo','id',[need_add_names])
 
     def commit(self):
         """将视频信息提交数据库
@@ -323,6 +343,7 @@ if __name__ == "__main__":
     # info = handler.search_videoinfo_by_videoid(88)
     # print(info)
 
-    info = handler.queryPersonByName()
-    print(info)
+    handler.addmanyPerson(['习近平','小王','小张','小明'])
+    # info = handler.queryPersonByName()
+    # print(info)
     # infos  = handler.commit()

@@ -39,14 +39,16 @@ class PersonFace(BasicPart):
         from DBHandler import DBHandler
         self.handler = DBHandler()        
         self.initFR()
+        # 缓存
+        self.dbcache = {}
         # self.initFI()        
 
     def initFI(self):
         """初始化索引模块
         """
         from FeatureIndex import FeatureIndex
-        prefix = 'Person'
-        self.fi = FeatureIndex(index_prefix=prefix,isShow = self.isShow)    
+        prefixs = ['Person']
+        self.fi = FeatureIndex(index_prefixs=prefixs,isShow = self.isShow)    
     
     def initFR(self):
         """初始化人脸特征提取模块
@@ -69,15 +71,18 @@ class PersonFace(BasicPart):
         """
         self.person_ids = self.handler.addmanyPerson(self.person_names)
 
-    def index_person(self):
+    def index_person(self, person_list = [], prefix="Person"):
         """对sample文件夹下所有人物人脸图片建立索引
+            或只建立某个人的索引
         """
-        person_list  = []
-        self.person_names   = os.listdir(self.dir['faces_sample'])
-        # 存数据库，获取id
-        self.storePersonToDB()
-        self.person_pic_feats = []
-        self.person_pic_ids   = []
+        if len(person_list) == 0:
+            self.person_names   = os.listdir(self.dir['faces_sample'])
+        else:
+            self.person_names   = person_list
+            # 存数据库，获取id
+            self.storePersonToDB()
+            self.person_pic_feats = []
+            self.person_pic_ids   = []
         
         for index, person_name in enumerate(self.person_names):
             # 每一个人物对应一个文件夹
@@ -94,7 +99,7 @@ class PersonFace(BasicPart):
         
         # 建立索引
         self.initFI()
-        self.fi.create_person_index(self.person_pic_feats, self.person_pic_ids)
+        self.fi.create_person_index(self.person_pic_feats, self.person_pic_ids, prefix)
 
     def setFeatureIndex(self, fi):
         """设置FI对象，用于查询时，从外部导入已载入索引的索引对象
@@ -129,9 +134,10 @@ class PersonFace(BasicPart):
         """
         # 首先进行query
         results, distance = self.fi.queryPerson(facefeat)
-        # 若高于最远距离,则为未知人物,返回-1,''
+
+        # 若高于最远距离,则为未知人物,返回None,''
         if distance[0] > self.maxdistance:
-            personid = -1
+            personid = None
             personname = 'unknown'
         else:            
             # 确定人物身份:
@@ -139,16 +145,21 @@ class PersonFace(BasicPart):
             max_count_id = pd.value_counts(results, sort=True).index[0]
             # 计算每个结果的得分
             personid = int(max_count_id)
-            personname = self.handler.queryPersonById(personid)[0][1]
+            # 首先查询缓存,若miss后再查询数据库
+            if personid in self.dbcache.keys():
+                personname = self.dbcache[personid]
+            else:
+                personname = self.handler.queryPersonById(personid)[0][1]
+                self.dbcache[personid] = personname
         return personid, personname
 
 if __name__ == '__main__':
     from FeatureIndex import FeatureIndex
     pf = PersonFace(True)
-    fi = FeatureIndex(True)
+    fi = FeatureIndex(True, person_index_prefixs=["Person","Person2"])
     fi.load_person_index()
     pf.setFeatureIndex(fi)
     pid, name = pf.identify_pic_person('/var/www/html/SiteVideo/upload/cap_20171031_001213_01.jpg')
     print(pid)
     print(name)    
-    # PersonFace(isShow=True).index_person()
+    # PersonFace(isShow=True).index_person(person_list=["赵乐际","汪洋","栗战书","俞正声"],prefix="Person2")

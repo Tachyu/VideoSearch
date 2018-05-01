@@ -254,10 +254,27 @@ class ContentDetector(SceneDetector):
         self.begin_hsv = None
         self.last_hsv = None
         self.num_pixels = None
+        # print(diff.shape)
+        hmask = np.ones((1, diff.shape[1],diff.shape[2]))
+        smask = np.ones((1, diff.shape[1],diff.shape[2]))
+        vmask = np.ones((1, diff.shape[1],diff.shape[2]))
+        
+        # print(mask2.shape)        
+        hmask = 1 * hmask
+        smask = 1 * hmask        
+        vmask = 1 * vmask
+        mask = np.vstack((hmask, smask))
+        self.mask = np.vstack((mask, vmask))
         # self.surf = cv2.xfeatures2d.SURF_create()
     
     def calculate_delta(self, hsv_a, hsv_b):
-        delta_hsv = np.sum(np.abs(hsv_a.astype(np.int32) - hsv_b.astype(np.int32)), axis=(1,2)) / (float(self.num_pixels))
+        # 减小亮度变化带来的影响,对HSV的V通道进行衰减,
+        # 同时适当增强其他两个通道
+        # 0.7, 1.1, 1.2
+        diff = hsv_a.astype(np.int32) - hsv_b.astype(np.int32)
+        diff = diff * self.mask
+        # mask =         
+        delta_hsv = np.sum(np.abs(diff), axis=(1,2)) / (float(self.num_pixels))
         delta_hsv = np.append(delta_hsv, np.sum(delta_hsv)/3.0)
         return delta_hsv
 
@@ -268,6 +285,8 @@ class ContentDetector(SceneDetector):
         # Value to return indiciating if a scene cut was found or not.
         cut_detected = False
         save_both    = False
+        return_last_hsv = None    
+        return_curr_hsv = None
         # 额外计算本scene中头尾两个画面的hsv,决定是否保存尾部图片
 
 
@@ -293,46 +312,35 @@ class ContentDetector(SceneDetector):
 
                 if not self.num_pixels:
                     self.num_pixels = curr_hsv[0].shape[0] * curr_hsv[0].shape[1]
-                
-                # delta_hsv (3,)
+
                 delta_hsv = self.calculate_delta(curr_hsv, last_hsv)
-
-                # print(delta_hsv.shape)
-                # for i in range(3):
-                #     num_pixels = curr_hsv[i].shape[0] * curr_hsv[i].shape[1]
-                #     curr_hsv[i] = curr_hsv[i].astype(np.int32)
-                #     last_hsv[i] = last_hsv[i].astype(np.int32)
-                #     delta_hsv[i] = np.sum(np.abs(curr_hsv[i] - last_hsv[i])) / float(num_pixels)
-
-                # delta_hsv.append(sum(delta_hsv) / 3.0)
-                # print(delta_hsv)
                 delta_h, delta_s, delta_v, delta_hsv_avg = delta_hsv
 
                 frame_metrics[frame_num]['delta_hsv_avg'] = delta_hsv_avg
                 frame_metrics[frame_num]['delta_hue'] = delta_h
                 frame_metrics[frame_num]['delta_sat'] = delta_s
                 frame_metrics[frame_num]['delta_lum'] = delta_v
-                
+
+            # 保存上一个场景的最后一帧hsv,并返回
+            return_last_hsv = last_hsv    
+            return_curr_hsv = curr_hsv
 
             if delta_hsv_avg >= self.threshold:
                 if self.last_scene_cut is None or (
-                  (frame_num - self.last_scene_cut) >= self.min_scene_len):
-                    # img2 = cv2.drawKeypoints(frame_img,keypoints,None,(255,0,0))  
-                    # plt.imshow(img2)  
-                    # plt.show()   
+                  (frame_num - self.last_scene_cut) >= self.min_scene_len): 
                     if self.begin_hsv is None:
                         pass# First Scene
                     else:
                         # Compare begin and last
                         _,_,_,value = self.calculate_delta(self.begin_hsv, self.last_hsv)
-                        if value > self.threshold/1.07 and value >= delta_hsv_avg:
+                        if value > self.threshold/1.1 and value >= delta_hsv_avg:
                             # save both
-                            # print("SAVE "+str(delta_hsv_avg) + " : " +str(value))
+                            # print("SAVE "+str(value)+ " : "+str(self.threshold) + " : " +str(delta_hsv_avg))
                             save_both = True
                         else:
                             pass
-                            # print("NO-SAVE "+str(delta_hsv_avg) + " : " +str(value))
-                            
+                            # print("NO-SAVE "+str(value)+ " : "+str(self.threshold) + " : " +str(delta_hsv_avg))
+       
                     self.begin_hsv = curr_hsv
                     scene_list.append(frame_num)
                     self.last_scene_cut = frame_num
@@ -342,124 +350,8 @@ class ContentDetector(SceneDetector):
             del self.last_frame
                 
         self.last_frame = frame_img.copy()
-        return cut_detected,save_both
+        return cut_detected, save_both, return_last_hsv, return_curr_hsv
 
     def post_process(self, scene_list, frame_num):
         """Not used for ContentDetector, as cuts are written as they are found."""
         return
-
-
-class MotionDetector(SceneDetector):
-    """Detects motion events in scenes containing a static background.
-
-    Uses background subtraction followed by noise removal (via morphological
-    opening) to generate a frame score compared against the set threshold.
-
-    Attributes:
-        threshold:  floating point value compared to each frame's score, which
-            represents average intensity change per pixel (lower values are
-            more sensitive to motion changes).  Default 0.5, must be > 0.0.
-        num_frames_post_scene:  Number of frames to include in each motion
-            event after the frame score falls below the threshold, adding any
-            subsequent motion events to the same scene.
-        kernel_size:  Size of morphological opening kernel for noise removal.
-            Setting to -1 (default) will auto-compute based on video resolution
-            (typically 3 for SD, 5-7 for HD). Must be an odd integer > 1.
-    """
-    def __init__(self, threshold = 0.50, num_frames_post_scene = 30,
-                 kernel_size = -1):
-        """Initializes motion-based scene detector object."""
-        super(MotionDetector, self).__init__()
-        self.threshold = float(threshold)
-        self.num_frames_post_scene = int(num_frames_post_scene)
-
-        self.kernel_size = int(kernel_size)
-        if self.kernel_size < 0:
-            # Set kernel size when process_frame first runs based on
-            # video resolution (480p = 3x3, 720p = 5x5, 1080p = 7x7).
-            pass
-
-        self.bg_subtractor = cv2.createBackgroundSubtractorMOG2( 
-            detectShadows = False )
-
-        self.last_frame_score = 0.0
-
-        self.in_motion_event = False
-        self.first_motion_frame_index = -1
-        self.last_motion_frame_index = -1
-        return
-
-    def process_frame(self, frame_num, frame_img, frame_metrics, scene_list):
-
-        # Value to return indiciating if a scene cut was found or not.
-        cut_detected = False
-
-        frame_grayscale = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        masked_frame = self.bg_subtractor.apply(frame_grayscale)
-
-        kernel = np.ones((self.kernel_size, self.kernel_size), np.uint8)
-        filtered_frame = cv2.morphologyEx(fgmask, cv2.MORPH_OPEN, kernel)
-
-        frame_score = np.sum(filtered_frame) / float( 
-            filtered_frame.shape[0] * filtered_frame.shape[1] )
-
-        return cut_detected
-
-    def post_process(self, scene_list, frame_num):
-        """Writes the last scene if the video ends while in a motion event.
-        """
-
-        # If the last fade detected was a fade out, we add a corresponding new
-        # scene break to indicate the end of the scene.  This is only done for
-        # fade-outs, as a scene cut is already added when a fade-in is found.
-
-        if self.in_motion_event:
-            # Write new scene based on first and last motion event frames.
-            pass
-        return self.in_motion_event
-
-
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#                                                                             #
-#          Detection Methods & Algorithms Planned or In Development           #
-#                                                                             #
-#
-# class EdgeDetector(SceneDetector):
-#    """Detects fast cuts/slow fades by using edge detection on adjacent frames.
-#
-#    Computes the difference image between subsequent frames after applying a
-#    Sobel filter (can also use a high-pass or other edge detection filters) and
-#    comparing the result with a set threshold (may be found using -stats mode).
-#    Detects both fast cuts and slow fades, although some parameters may need to
-#    be modified for accurate slow fade detection.
-#    """
-#    def __init__(self):
-#        super(EdgeDetector, self).__init__()
-#                                                                             #
-#                                                                             #
-# class DissolveDetector(SceneDetector):
-#    """Detects slow fades (dissolve cuts) via changes in the HSV colour space.
-#
-#    Detects slow fades only; to detect fast cuts between content scenes, the
-#    ContentDetector should be used instead.
-#    """
-#
-#    def __init__(self):
-#        super(DissolveDetector, self).__init__()
-#                                                                             #
-#                                                                             #
-# class HistogramDetector(SceneDetector):
-#    """Detects fast cuts via histogram changes between sequential frames.
-#
-#    Detects fast cuts between content (using histogram deltas, much like the
-#    ContentDetector uses HSV colourspace deltas), as well as both fades and
-#    cuts to/from black (using a threshold, much like the ThresholdDetector).
-#    """
-#
-#    def __init__(self):
-#        super(DissolveDetector, self).__init__()
-#                                                                             #
-#                                                                             #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-

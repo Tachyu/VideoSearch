@@ -1,13 +1,21 @@
+from gevent import monkey
+monkey.patch_all()
 from flask import Flask
 from flask import request,make_response,jsonify
 from flask_cors import *
+from gevent import wsgi
 import json
 import os,uuid
 from werkzeug import secure_filename
+import os
+import time
 
 
 
 app = Flask(__name__)
+face_thresh = 400
+cont_thresh = 400
+
 
 @app.route('/')
 def hello_world():
@@ -60,7 +68,7 @@ def uploadpic():
     picdata = request.files['file']
     picdata.save(picdata.filename)
     print(picdata.filename)
-
+    time.sleep(3)
     # print(request.form)
     ud = str(uuid.uuid4())
     js_name = 'Data/Videos/UUID/' + ud + ".json"
@@ -81,12 +89,24 @@ def uploadpic():
     # print("RETURE RESPONSE")
     return response_to(message,False)
 
-@app.route('/search', methods=['POST'])
+@app.route('/setthresh', methods=['POST'])
+def setthresh():
+    face_thresh = request.form['face_thresh']
+    cont_thresh = request.form['content_thresh']
+    message = {}
+    message['jsname'] = 'OK'
+    return response_to(message, False)
+
+@app.route('/searchkeywords', methods=['POST'])
 def search():
     keywords = request.form['keywords']
+    time.sleep(1)
     print(keywords)
-    return 'POST '+keywords
+    message = {}
+    message['jsname'] = 'OK'
+    return response_to(message, False)
 
 
 if __name__ == '__main__':   
-    app.run(debug=False)
+    server = wsgi.WSGIServer(('0.0.0.0', 5000), app)
+    server.serve_forever()

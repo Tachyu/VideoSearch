@@ -116,10 +116,23 @@ class MainSolr(BasicPart):
             data = self.__generate_solrdata(sceneinfo)
             r = self.__post_to_solr(self.s_collect, data)
             print(r.text)
-            
 
+    def __query(self, collection, keywords):
+        args = (self.address, self.port, collection,keywords)
+        url_video = '''http://%s:%s/solr/%s/select?q=%s&wt=json&indent=true'''%args
+        # print(url_video)
+        r = requests.get(url_video, verify = False)
+        r = r.json()
+        # print(r)
+        return r['response']['numFound'], r['response']['docs']
 
+    def queryKeywords(self, keywords):
+        v_num, v_list = self.__query(self.v_collect,keywords)
+        s_num, s_list = self.__query(self.s_collect,keywords)
+        return v_num, v_list, s_num, s_list
+        
 if __name__ == '__main__':  
     ms = MainSolr(isShow=True)
-    ms.addScene()
+    # ms.addScene()
+    print(ms.queryKeywords("人 AND 电视机"))
         

@@ -22,6 +22,8 @@ import pickle
 from DBHandler import DBHandler
 from VideoSample import VideoSample
 from BasicPart import BasicPart
+from FeatureIndex import FeatureIndex
+from PersonFace import PersonFace
 
 class MainReader(BasicPart):
     """视频入库主入口程序
@@ -45,6 +47,11 @@ class MainReader(BasicPart):
         self.dbhandler = DBHandler()
         self.save_video()
         self.item_list = []
+        # 人物识别
+        self.pf = PersonFace(True)
+        fi = FeatureIndex(True, person_index_prefixs=["Person","Person2"])
+        fi.load_person_index()
+        self.pf.setFeatureIndex(fi)
         pass
 
     def read_config(self):
@@ -74,6 +81,8 @@ class MainReader(BasicPart):
     def __init_pipeline(self):
         s_time = time.time()        
         process_line = []
+        # 增加Merge模块
+        
         from ObjectDet import ObjectDet
         process_line.append(ObjectDet(isShow=self.isShow, picShow=False))
 
@@ -87,6 +96,8 @@ class MainReader(BasicPart):
         for processer in process_line:
             processer.startThread(i_queue,i_lock)
             i_queue, i_lock = processer.getOutputQueueAndLock()
+        
+
         return i_queue, i_lock
 
     def process(self, item):
@@ -105,9 +116,17 @@ class MainReader(BasicPart):
                 continue
             cur_pic_id   = self.db_picid_list[index]            
             cur_pic_list = [cur_pic_id] * cur_face_num
-            cur_person_ids = [None] * cur_face_num              
+            # cur_person_ids = [None] * cur_face_num              
+            
+            # 识别人脸到人物
+            personids = []
+            for feat in item['face_result']['feats']:
+                personid,_ = self.pf.idenity(feat)
+                print(personid)
+                personids.append(personid)
+
             # 提交数据库   
-            cur_db_faceid = self.dbhandler.addmanyFaceFeats(cur_pic_list, cur_person_ids)
+            cur_db_faceid = self.dbhandler.addmanyFaceFeats(cur_pic_list, personids)
             faces_num += cur_face_num
 
             for index, feat in enumerate(item['face_result']['feats']):
@@ -242,11 +261,13 @@ class MainReader(BasicPart):
 if __name__ == "__main__":
     # main("Data/Videos/20170701_small.mp4",isShow=False).start()
     videoinfo = {}
-    date = '20171031'
+    date = 'person'
+    # date = '20171215'
+    
     videoinfo['name'] = "Data/Videos/%s.mp4"%date
     des = ''
-    with open('Data/Videos/Descriptions/%s.txt'%date,'r') as df:
-        des = df.read()
+    # with open('Data/Videos/Descriptions/%s.txt'%date,'r') as df:
+    #     des = df.read()
     videoinfo['descrption'] = des
     MainReader(videoinfo,isShow=True).start()
     
