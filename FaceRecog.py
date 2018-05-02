@@ -128,10 +128,11 @@ class FaceRecog(BasicPart):
                 else:
                     name = str(item['id']) + "_OUT"
                 item['name'] = name
-            result = self.__Recognation(item['name'], item['data'])
-        
-            # 加入处理结果队列
-            item['face_result'] = result
+            # 缩减模块
+            if item['id'] == item['relate_id']:
+                result = self.__Recognation(item['name'], item['data'])
+                item['face_result'] = result
+            # 加入处理结果队列            
             self.output_queue.put(item)
         else:
             logging.warn("FaceRecog.process: NONE!")

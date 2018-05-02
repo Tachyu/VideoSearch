@@ -59,7 +59,7 @@ class MainSolr(BasicPart):
         params  = {"boost":1.0,"overwrite": "true","commitWithin": 1000}
         url     = 'http://%s:%s/solr/%s/update?wt=json'%(self.address, self.port, collection)
         headers = {"Content-Type": "application/json"}
-        print(data)
+        # print(data)
         r = requests.post(url, json = data, params = params, headers = headers)
         return r
 
@@ -98,7 +98,7 @@ class MainSolr(BasicPart):
         data = self.__generate_solrdata(videoinfo_dic)
         # 提交
         r = self.__post_to_solr(self.v_collect, data)
-        print(r.text)
+        # print(r.text)
 
     def addScene(self, videoid = -1):
         # 查询数据库，并读取本地obj文件
@@ -107,15 +107,20 @@ class MainSolr(BasicPart):
         obj_data_list = self.__read_objs(videoid)
 
         # 根据picid从数据库获取场景信息
+        # 增加场景中识别到的人物信息
         sceneinfos =[]    
-        for pic_item in obj_data_list[:10]:
+        for pic_item in obj_data_list:
             pic_id = pic_item['picid']
-            sceneinfo = self.handler.search_scene_video_info_by_picid(pic_id)
-            sceneinfo['objects'] = pic_item['objs']
-             # 提交
-            data = self.__generate_solrdata(sceneinfo)
-            r = self.__post_to_solr(self.s_collect, data)
-            print(r.text)
+            # print(pic_id)
+            sceneinfo_list = self.handler.search_scene_video_info_by_picid(pic_id)
+            for sceneinfo in sceneinfo_list:
+                sceneinfo['objects'] = pic_item['objs']
+                
+                # 提交
+                data = self.__generate_solrdata(sceneinfo)
+                r = self.__post_to_solr(self.s_collect, data)
+            # print(r.text)
+        #
 
     def __query(self, collection, keywords):
         args = (self.address, self.port, collection,keywords)
@@ -127,12 +132,24 @@ class MainSolr(BasicPart):
         return r['response']['numFound'], r['response']['docs']
 
     def queryKeywords(self, keywords):
+        """在solr中检索关键词
+        
+        Arguments:
+            keywords {string} -- 关键词
+        
+        Returns:
+            v_num -- 视频数
+            v_list -- 视频列表
+            s_num -- 场景数
+            s_list -- 场景列表
+        """
         v_num, v_list = self.__query(self.v_collect,keywords)
         s_num, s_list = self.__query(self.s_collect,keywords)
         return v_num, v_list, s_num, s_list
         
 if __name__ == '__main__':  
     ms = MainSolr(isShow=True)
-    # ms.addScene()
-    print(ms.queryKeywords("人 AND 电视机"))
+    # ms.addVideo(122)    
+    ms.addScene(122)
+    # print(ms.queryKeywords("人 AND 电视机"))
         

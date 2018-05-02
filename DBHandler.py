@@ -102,7 +102,7 @@ class DBHandler:
         # print(nextval)
         s2_args = []
         size    = len(arglists[0])
-        s2_sql = 'INSERT INTO "%s" VALUES'%tablename         
+        s2_sql = 'INSERT INTO "%s" VALUES '%tablename         
         for i in range(size):
             s2_sql += '(DEFAULT,'
             # s2_args.append(nextval + i)
@@ -132,14 +132,14 @@ class DBHandler:
         return self.__addmany('SceneInfo','SceneId',[videoids,starttimes,lengths])
 
 
-    def addmanyFaceFeats(self, sceneids, personids):
+    def addmanyFaceFeats(self, picids, personids):
         """批量快速添加人脸特征信息
             返回添加的人脸特征信息id列表
         Arguments:
-            sceneids  {int} --  场景id列表
+            picids  {int} --  图片id列表
             personids {int} --人物id列表
         """
-        return self.__addmany('FaceInfo','FaceFeatId',[sceneids, personids])
+        return self.__addmany('FaceInfo','FaceFeatId',[picids, personids])
 
     def addmanyPicFeats(self, sceneids):
         """批量快速添加图像特征信息
@@ -148,32 +148,85 @@ class DBHandler:
             sceneids  {int} --  场景id列表
         """
         return self.__addmany('PicInfo','PicFeatId',[sceneids])
+    
+    def addmanyRelateScene(self, relate_sceneids, sceneids):
+        """添加相关场景信息
+            relate_sceneids: 被关联的sceneid(root)
+            sceneids: 关联到relate_sceneid的sceneid
+        """
+        return self.__addmany('RelateScene','id',[relate_sceneids, sceneids])
+
+
     def test(self, picid):
         results = self.__calldbproc_table([
             '"public"."querypic"',
              int(picid)])
         print(results)
 
+    def query_relate(self, relateid):
+        """查询relate场景信息
+        
+        Arguments:
+            relateid {int} -- 待查询的scene
+        """
+        result_dic_list = []
+        # 根据sceneid在relatescene查询其名下的其余sceneid
+        relate_results = self.__calldbproc_table([
+        '"public"."queryRelateScene"',
+            int(relateid)])
+        size = len(relate_results)
+        for re in relate_results:
+            redic              = {}
+            redic['sceneid']   = re[0]
+            redic['videoid']   = re[1]
+            redic['videoname'] = re[2]
+            redic['starttime'] = re[3]
+            redic['length']    = re[4]
+            result_dic_list.append(redic)
+        return result_dic_list
+    
     def search_scene_video_info_by_picid(self, picid):
         """根据picid来查询对应的图片，场景以及视频信息
-        result_dic['sceneid']   = results[0][0]
-        result_dic['videoid']   = results[0][1]
-        result_dic['videoname'] = results[0][2]
-        result_dic['starttime'] = results[0][3]
-        result_dic['length']    = results[0][4]
+            增加人物信息
+        ['sceneid']
+        ['videoid']
+        ['videoname']
+        ['starttime']
+        ['length']
         """
-
+        result_dic_list = []
         results = self.__calldbproc_table([
             '"public"."querypic"',
              int(picid)])
-
         result_dic              = {}
         result_dic['sceneid']   = results[0][0]
         result_dic['videoid']   = results[0][1]
         result_dic['videoname'] = results[0][2]
         result_dic['starttime'] = results[0][3]
         result_dic['length']    = results[0][4]
-        return result_dic
+        result_dic_list.append(result_dic)
+        
+        relate_id = result_dic['sceneid']        
+        result_dic_list += self.query_relate(relate_id)
+
+        # 查询出对应场景包含的人物名:
+        person_results = self.__calldbproc_table([
+            '"public"."queryperson"',
+             result_dic['sceneid']]) 
+        person_num = len(person_results)
+        person_list = []
+        for i in range(person_num):
+            person_list.append(person_results[i][1])
+        
+        for item in result_dic_list:
+            try:
+                item['persons'] = person_list      
+            except Exception as e:
+                print(e)
+                print(item)
+                print(person_list)      
+        
+        return result_dic_list
 
     def search_scene_video_info_by_faceid(self, faceid):
         '''
@@ -209,6 +262,8 @@ class DBHandler:
             "public"."FaceInfo"."FaceFeatId" = %s ))
             AND "public"."SceneInfo"."VideoId"="public"."VideoId"."VideoId" ;
         '''
+        result_dic_list = []
+
         results                 = self.__excutesql_table(sql, [faceid])
         result_dic              = {}
         result_dic['sceneid']   = results[0][0]
@@ -216,7 +271,11 @@ class DBHandler:
         result_dic['videoname'] = results[0][2]
         result_dic['starttime'] = results[0][3]
         result_dic['length']    = results[0][4]
-        return result_dic
+        result_dic_list.append(result_dic)
+        
+        relate_id = result_dic['sceneid']        
+        result_dic_list += self.query_relate(relate_id)
+        return result_dic_list
 
     def search_videoinfo_by_videoid(self, videoid):
         """根据faceid来查询对应的图片，场景以及视频信息
@@ -236,6 +295,7 @@ class DBHandler:
             AND "public"."VideoInfo"."VideoId" = "public"."VideoId"."VideoId";
         '''
         results                   = self.__excutesql_table(sql, [videoid])
+        print(results)
         result_dic                = {}
         result_dic['videoid']     = results[0][0]        
         result_dic['videoname']   = results[0][1]
@@ -342,8 +402,10 @@ if __name__ == "__main__":
 
     # info = handler.search_videoinfo_by_videoid(88)
     # print(info)
-
-    handler.addmanyPerson(['习近平','小王','小张','小明'])
+    handler.addmanyRelateScene([1,1,1],[2,3,4])
+    # handler.addmanyPerson(['习近平','小王','小张','小明'])
+    # results = handler.addmanyPicFeats([1,1,1])
+    # print(results)
     # info = handler.queryPersonByName()
     # print(info)
     # infos  = handler.commit()

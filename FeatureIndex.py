@@ -18,18 +18,15 @@ class FeatureIndex(BasicPart):
     Arguments:
         BasicPart {BasicPart} -- 父类
     """
-    def __init__(self, 
-        index_prefixs=['test'],
-        person_index_prefixs=['Person'],                        
+    def __init__(self,                     
         logfile=None, 
+        isShowIndex=False,
         isShow=False):
         BasicPart.__init__(self, logfile, isShow)
         self.isfaceLoad    = False
         self.iscontLoad    = False
         self.ispersLoad    = False        
-        self.index_prefixs = index_prefixs
-        self.person_index_prefixs = person_index_prefixs
-
+        self.isShowIndex = isShowIndex
         # 索引对象列表
         self.face_index_list     = []
         self.face_id_list_list   = []
@@ -204,9 +201,11 @@ class FeatureIndex(BasicPart):
         """
         return self.__save_feat_index('content_feat', 'content_index', prefix, 'sfid', isSave,  features_files)
     
-    def load_index(self):
+    def load_index(self, index_prefixs=['test'],person_index_prefixs=['Person']):
         """将索引载入内存，用于检索用户请求图片提取的特征
         """
+        self.index_prefixs=index_prefixs
+        self.person_index_prefixs=person_index_prefixs    
         self.load_face_index()
         self.load_cont_index()
         self.load_person_index()

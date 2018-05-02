@@ -30,6 +30,7 @@
 # Third-Party Library Imports
 import cv2
 import numpy as np
+import time
 # import minpy.numpy as np
 
 # Default value for -d / --detector CLI argument (see get_available_detectors()
@@ -255,16 +256,16 @@ class ContentDetector(SceneDetector):
         self.last_hsv = None
         self.num_pixels = None
         # print(diff.shape)
-        hmask = np.ones((1, diff.shape[1],diff.shape[2]))
-        smask = np.ones((1, diff.shape[1],diff.shape[2]))
-        vmask = np.ones((1, diff.shape[1],diff.shape[2]))
+        # hmask = np.ones((1, diff.shape[1],diff.shape[2]))
+        # smask = np.ones((1, diff.shape[1],diff.shape[2]))
+        # vmask = np.ones((1, diff.shape[1],diff.shape[2]))
         
-        # print(mask2.shape)        
-        hmask = 1 * hmask
-        smask = 1 * hmask        
-        vmask = 1 * vmask
-        mask = np.vstack((hmask, smask))
-        self.mask = np.vstack((mask, vmask))
+        # # print(mask2.shape)        
+        # hmask = 1 * hmask
+        # smask = 1 * hmask        
+        # vmask = 1 * vmask
+        # mask = np.vstack((hmask, smask))
+        # self.mask = np.vstack((mask, vmask))
         # self.surf = cv2.xfeatures2d.SURF_create()
     
     def calculate_delta(self, hsv_a, hsv_b):
@@ -272,7 +273,7 @@ class ContentDetector(SceneDetector):
         # 同时适当增强其他两个通道
         # 0.7, 1.1, 1.2
         diff = hsv_a.astype(np.int32) - hsv_b.astype(np.int32)
-        diff = diff * self.mask
+        # diff = diff * self.mask
         # mask =         
         delta_hsv = np.sum(np.abs(diff), axis=(1,2)) / (float(self.num_pixels))
         delta_hsv = np.append(delta_hsv, np.sum(delta_hsv)/3.0)
@@ -350,6 +351,9 @@ class ContentDetector(SceneDetector):
             del self.last_frame
                 
         self.last_frame = frame_img.copy()
+
+        # TODO: 暂时定为save_both: False
+        save_both = False
         return cut_detected, save_both, return_last_hsv, return_curr_hsv
 
     def post_process(self, scene_list, frame_num):

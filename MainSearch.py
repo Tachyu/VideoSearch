@@ -6,6 +6,8 @@ from FaceRecog import FaceRecog
 from ObjectDet import ObjectDet
 from DBHandler import DBHandler
 from PersonFace import PersonFace
+from MainSolr import MainSolr
+from PublicTool import *
 import os,json
 
 try:
@@ -15,16 +17,18 @@ except ImportError:
     raise ImportError('Pillow can not be found!')
 
 class MainSearch(BasicPart):
-    def __init__(self, prefix, imagename,max_len=1000, logfile=None, isShow=False):
+    def __init__(self, 
+        max_len=1000, logfile=None, isShow=False):
         BasicPart.__init__(self, logfile, isShow)
-        self.imagename     = imagename
+        self.imagename     = ''
         self.facerecog     = FaceRecog(logfile, isShow)
         self.objectdetect  = ObjectDet(logfile, isShow, single_pic_process=True)
         self.dbhandler     = DBHandler()
-        self.searchfeature = FeatureIndex(prefix, logfile, isShow)
+        self.searchfeature = FeatureIndex(logfile,isShow)
         self.personface    = PersonFace(logfile, isShow=isShow)
+        self.solrobj       = MainSolr(logfile, isShow)
+
         self.max_len = max_len
-        self.prefix = prefix
         # 默认阈值
         self.setThreshold(800, 1000)      
 
@@ -39,8 +43,8 @@ class MainSearch(BasicPart):
         self.contentThreshold = contentThreshold
 
 
-    def load_index(self):
-        self.searchfeature.load_index()
+    def load_index(self,prefixlist,person_prefix_list):
+        self.searchfeature.load_index(prefixlist,person_prefix_list)
         self.personface.setFeatureIndex(self.searchfeature)
 
     def set_image(self,imagename):
@@ -52,6 +56,7 @@ class MainSearch(BasicPart):
         self.thumb_web_prefix = self.config.get("search","thumb_web_prefix")
         self.thumb_size = self.config.get("search","thumb_size")  
         self.personinfo_dir  = self.config.get("datadir","person_info")
+        self.thumb_info = (self.thumb_size, self.thumb_prefix, self.thumb_web_prefix)
          
     
     def __get_db_info(self, id_type, id_list):
@@ -62,11 +67,11 @@ class MainSearch(BasicPart):
         if id_type == 'face':
             for faceid in id_list:
                 v_s_info = self.dbhandler.search_scene_video_info_by_faceid(int(faceid))
-                results.append(SceneInfo(v_s_info))
+                results += [SceneInfo(v_s_item) for v_s_item in v_s_info]
         else:
             for picid in id_list:
                 v_s_info = self.dbhandler.search_scene_video_info_by_picid(int(picid))
-                results.append(SceneInfo(v_s_info))
+                results += [SceneInfo(v_s_item) for v_s_item in v_s_info]
         return set(results)
     
     def get_face_to_video_sceneinfo(self, faceidlist):
@@ -77,11 +82,15 @@ class MainSearch(BasicPart):
         results = self.__get_db_info('content', picidlist)
         return results
     
-    def create_indexs(self, isSave=False):
+    def create_indexs(self, perfix, featidlist=[], isSave=True):
         """创建特征的索引文件
         """
-        self.searchfeature.save_facefeat_index(self.prefix, isSave=isSave)
-        self.searchfeature.save_contentfeat_index(self.prefix, isSave=isSave)
+        # 创建文件名:
+        facefeatlist = [id + "_ff.pkl" for id in featidlist]
+        contfeatlist = [id + "_sf.pkl" for id in featidlist]
+        
+        self.searchfeature.create_facefeat_index(perfix,isSave,facefeatlist)
+        self.searchfeature.create_contentfeat_index(perfix,isSave,contfeatlist)
 
     def selectByDistance(self, distance, thresh):
         """按照阈值选择符合条件的结果
@@ -153,61 +162,22 @@ class MainSearch(BasicPart):
             image_names.append(image_name)
         
         return image_names
-    
-    def mkthumb(self, timestamp, full_videoname, image_name):
-        timestamp = round(timestamp) + 1
-        cmd = '''
-            ffmpeg -ss %d -i %s -y -f image2 -vframes 1 -s %s %s
-            '''%(timestamp,full_videoname,self.thumb_size,image_name)
-        a = subprocess.getoutput(cmd)
 
     def searchKeywords(self, text):
         """使用solr搜索关键词
         """
-        url = 'http://*IP*:8985/solr/*集合名*/select?q=*字段名*:"\%s"&wt=json&indent=true'%item
-        r = requests.get(url, verify = False)
-        r = r.json()['response']['numFound']
-        pass
-        
-    def to_json(self, result_list):
-        json_list = []
-        # 1. 转换文件名到路径，2.同时生成略缩图：400*300
-        for index, re in enumerate(result_list):
-            cpdic = re.dic
-            videopath = cpdic['videoname']
-            video_name = videopath.split('/')[-1]
-            cpdic['videoname'] = video_name
-            cpdic['videopath'] = videopath
+        v_num, v_list, s_num, s_list = self.solrobj.queryKeywords(text)
+        # 创建略缩图
+        json_video_list = to_json_video(self.thumb_info, v_list)
+        json_scene_list = to_json_scene(self.thumb_info, s_list,False)
 
-            # 截图
-            thumb_name = cpdic['videoname'].split(".")[0] +"_s_"+str(cpdic['sceneid']) +".jpg"
-            thumb_path = os.path.join(self.thumb_prefix,thumb_name)
-            if os.path.exists(thumb_path):
-                pass
-            else:
-                st = cpdic['starttime']
-                pt = cpdic['videopath']
-                self.mkthumb(st, pt, thumb_path)
-            cpdic['thumb'] = self.thumb_web_prefix + thumb_name
-            json_list.append(cpdic)
-        return json_list
+        result_json = {}
+        result_json['video_num'] = len(json_video_list)  
+        result_json['video_list'] = json_video_list
 
-    def extrace_ids(self, resultlist):
-        sceneids = [item.dic['sceneid'] for item in resultlist]
-        videoids = [item.dic['videoid'] for item in resultlist]
-        return sceneids, videoids
-
-    def read_person_info(self, pid):
-        """读人物信息文件
-        
-        Arguments:
-            pid {int} -- 人物id
-        """
-        content = ''
-        filename = self.personinfo_dir + '/' + str(pid) + '.txt'
-        with open(filename, 'r') as f:
-            content = f.read()
-        return content
+        result_json['scene_num'] = len(json_scene_list)  
+        result_json['scene_list'] = json_scene_list
+        return result_json
 
 
     def get_search_result_JSON(self):
@@ -225,22 +195,22 @@ class MainSearch(BasicPart):
 
         result_json = {}
         result_json['face_scene_num'] = len(face_idlist)  
-        result_json['face_scene_list'] = self.to_json(face_results)
+        result_json['face_scene_list'] = to_json_scene(self.thumb_info, face_results)
         result_json['face_dist_list'] = face_distance       
 
         result_json['content_scene_num'] = len(cont_idlist)  
-        result_json['content_scene_list'] = self.to_json(cont_results)
+        result_json['content_scene_list'] = to_json_scene(self.thumb_info, face_results)
         result_json['content_dist_list'] = cont_distance       
         
         # 交集
-        fsids, fvids = self.extrace_ids(face_results)
-        csids, cvids = self.extrace_ids(cont_results)
+        fsids, fvids = extrace_ids(face_results)
+        csids, cvids = extrace_ids(cont_results)
         both_scene_list = []
         # both_scene_list = set(face_results) & set(cont_results)
         both_video_list = set(fvids) | set(cvids)
         result_json['both_video_num']  = len(both_video_list)
         result_json['both_scene_num']  = len(both_scene_list)
-        result_json['both_scene_list'] = self.to_json(both_scene_list)
+        result_json['both_scene_list'] = to_json_scene(self.thumb_info, face_results)
 
         # 识别人物
         print(self.imagename)
@@ -248,7 +218,7 @@ class MainSearch(BasicPart):
         # 读取存储的人物简介
         pinfo = ''
         if pid != -1:
-            pinfo = self.read_person_info(pid)
+            pinfo = read_person_info(self.personinfo_dir, pid)
         result_json['personid'] = pid
         result_json['personname'] = pname
         result_json['personinfo'] = pinfo
@@ -259,32 +229,15 @@ class MainSearch(BasicPart):
         return result_json
 
 
-
-class SceneInfo:
-    def __init__(self, dic):
-        self.dic = dic
-    
-    def __eq__(self, other):
-        if isinstance(other, SceneInfo):
-            return self.dic['sceneid'] == other.dic['sceneid']
-        else:
-            return False
-    def __ne__(self, other):
-        return (not self.__eq__(other))
-    
-    def __str__(self):
-        return(str(self.dic))
-
-    def __hash__(self):
-        return hash(self.dic['sceneid'])
-
 if __name__ == '__main__':  
-    ms = MainSearch(prefix='0825-1031-1030', max_len = 10, imagename="Data/Tmp/1.jpg",isShow=True)
-    # ms.create_indexs(True)
+    imagename="Data/Tmp/1.jpg"
+    ms = MainSearch(max_len = 10, isShow=True)
+    # ms.create_indexs('1215&1220',['122','123'],True)
     ms.setThreshold(800,800)
-    # ms = MainSearch(prefix='test', imagename="Data/Tmp/tmp.png",isShow=True)
-    ms.load_index()
-    print(ms.get_search_result_JSON())
+    # ms.load_index(['1215&1220'],['Person'])
+    # ms.set_image(imagename)
+    # print(ms.get_search_result_JSON())
+    print(ms.searchKeywords("张德江"))
     
     # idlist = ms.search_face()[:10]
     # results = ms.get_face_to_video_sceneinfo(idlist)  

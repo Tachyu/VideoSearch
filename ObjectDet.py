@@ -282,10 +282,12 @@ class ObjectDet(BasicPart):
                 else:
                     name = str(item['id']) + "_OUT"
                 item['name'] = name
-            
-            image_obj_dic = self.__Detection(item['name'], item['data'])
-            # 加入处理结果队列
-            item['image_obj_dic'] = image_obj_dic
+            # 缩减模块
+            if item['id'] == item['relate_id']:
+                image_obj_dic = self.__Detection(item['name'], item['data'])
+                # 加入处理结果队列
+                item['image_obj_dic'] = image_obj_dic
+
             self.output_queue.put(item)
             
     # def startThread(self, input_queue, input_lock):

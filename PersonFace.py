@@ -79,10 +79,10 @@ class PersonFace(BasicPart):
             self.person_names   = os.listdir(self.dir['faces_sample'])
         else:
             self.person_names   = person_list
-            # 存数据库，获取id
-            self.storePersonToDB()
-            self.person_pic_feats = []
-            self.person_pic_ids   = []
+        # 存数据库，获取id
+        self.storePersonToDB()
+        self.person_pic_feats = []
+        self.person_pic_ids   = []
         
         for index, person_name in enumerate(self.person_names):
             # 每一个人物对应一个文件夹
@@ -156,10 +156,12 @@ class PersonFace(BasicPart):
 if __name__ == '__main__':
     from FeatureIndex import FeatureIndex
     pf = PersonFace(True)
-    fi = FeatureIndex(True, person_index_prefixs=["Person","Person2"])
+    fi = FeatureIndex(True, person_index_prefixs=["Person"])
     fi.load_person_index()
     pf.setFeatureIndex(fi)
     pid, name = pf.identify_pic_person('/var/www/html/SiteVideo/upload/cap_20171031_001213_01.jpg')
     print(pid)
     print(name)    
     # PersonFace(isShow=True).index_person(person_list=["赵乐际","汪洋","栗战书","俞正声"],prefix="Person2")
+    # PersonFace(isShow=True).index_person(person_list=[],prefix="Person")
+    
