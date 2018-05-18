@@ -237,6 +237,7 @@ class ThresholdDetector(SceneDetector):
         return cut_detected
 
 import matplotlib.pyplot as plt  
+from scenedetect.computesim import ComputeSim
 
 class ContentDetector(SceneDetector):
     """Detects fast cuts using changes in colour and intensity between frames.
@@ -250,11 +251,15 @@ class ContentDetector(SceneDetector):
         super(ContentDetector, self).__init__()
         self.threshold = threshold
         self.min_scene_len = min_scene_len  # minimum length of any given scene, in frames
+        
         self.last_frame = None
         self.last_scene_cut = None
+        self.begin_scene_frame = None
+
         self.begin_hsv = None
         self.last_hsv = None
         self.num_pixels = None
+        self.cs = ComputeSim()
         # print(diff.shape)
         # hmask = np.ones((1, diff.shape[1],diff.shape[2]))
         # smask = np.ones((1, diff.shape[1],diff.shape[2]))
@@ -290,70 +295,20 @@ class ContentDetector(SceneDetector):
         return_curr_hsv = None
         # 额外计算本scene中头尾两个画面的hsv,决定是否保存尾部图片
 
-
         if self.last_frame is not None:
-            # Change in average of HSV (hsv), (h)ue only, (s)aturation only, (l)uminance only.
-            delta_hsv_avg, delta_h, delta_s, delta_v = 0.0, 0.0, 0.0, 0.0
-
-            if frame_num in frame_metrics and 'delta_hsv_avg' in frame_metrics[frame_num]:
-                delta_hsv_avg = frame_metrics[frame_num]['delta_hsv_avg']
-                delta_h = frame_metrics[frame_num]['delta_hue']
-                delta_s = frame_metrics[frame_num]['delta_sat']
-                delta_v = frame_metrics[frame_num]['delta_lum']
-
-            else:
-                num_pixels = frame_img.shape[0] * frame_img.shape[1]
-                curr_hsv = cv2.split(cv2.cvtColor(frame_img, cv2.COLOR_BGR2HSV))
-                curr_hsv = np.array(curr_hsv)
-
-                last_hsv = self.last_hsv
-                if last_hsv is None:
-                    last_hsv = cv2.split(cv2.cvtColor(self.last_frame, cv2.COLOR_BGR2HSV))
-                    last_hsv = np.array(last_hsv)
-
-                if not self.num_pixels:
-                    self.num_pixels = curr_hsv[0].shape[0] * curr_hsv[0].shape[1]
-
-                delta_hsv = self.calculate_delta(curr_hsv, last_hsv)
-                delta_h, delta_s, delta_v, delta_hsv_avg = delta_hsv
-
-                frame_metrics[frame_num]['delta_hsv_avg'] = delta_hsv_avg
-                frame_metrics[frame_num]['delta_hue'] = delta_h
-                frame_metrics[frame_num]['delta_sat'] = delta_s
-                frame_metrics[frame_num]['delta_lum'] = delta_v
-
-            # 保存上一个场景的最后一帧hsv,并返回
-            return_last_hsv = last_hsv    
-            return_curr_hsv = curr_hsv
-
-            if delta_hsv_avg >= self.threshold:
-                if self.last_scene_cut is None or (
-                  (frame_num - self.last_scene_cut) >= self.min_scene_len): 
-                    if self.begin_hsv is None:
-                        pass# First Scene
-                    else:
-                        # Compare begin and last
-                        _,_,_,value = self.calculate_delta(self.begin_hsv, self.last_hsv)
-                        if value > self.threshold/1.1 and value >= delta_hsv_avg:
-                            # save both
-                            # print("SAVE "+str(value)+ " : "+str(self.threshold) + " : " +str(delta_hsv_avg))
-                            save_both = True
-                        else:
-                            pass
-                            # print("NO-SAVE "+str(value)+ " : "+str(self.threshold) + " : " +str(delta_hsv_avg))
-       
-                    self.begin_hsv = curr_hsv
-                    scene_list.append(frame_num)
-                    self.last_scene_cut = frame_num
-                    cut_detected = True
-            self.last_hsv = curr_hsv
-            #self.last_frame.release()
-            del self.last_frame
-                
+            sim = self.cs.caldegree(self.last_frame, frame_img)
+            if sim < 0.5:
+                cut_detected = True
+                if self.begin_scene_frame != None:
+                    innersim = self.cs.caldegree(self.begin_scene_frame,self.last_frame)
+                    if innersim < 0.6:
+                        save_both = True
+                self.begin_scene_frame = frame_img.copy()
+    
         self.last_frame = frame_img.copy()
+        return_last_hsv = None
+        return_curr_hsv = None
 
-        # TODO: 暂时定为save_both: False
-        # save_both = True
         return cut_detected, save_both, return_last_hsv, return_curr_hsv
 
     def post_process(self, scene_list, frame_num):

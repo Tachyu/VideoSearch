@@ -1,7 +1,19 @@
+# coding:utf-8
 """一些公用的函数
 """
 import os, requests, json, subprocess
 import numpy as np
+
+class MyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        else:
+            return super(MyEncoder, self).default(obj)
 
 
 def mkthumb(thumb_size, timestamp, full_videoname, image_name):
@@ -65,6 +77,7 @@ def to_json_scene(thumb_info, result_list, isObj=True):
     thumb_size, thumb_prefix, thumb_web_prefix = thumb_info    
     json_list = []
     # 1. 转换文件名到路径，2.同时生成略缩图：400*300
+    # 同时查询到当前场景的人物,物体
     for index, re in enumerate(result_list):
         if isObj:
             cpdic = re.dic
@@ -74,6 +87,7 @@ def to_json_scene(thumb_info, result_list, isObj=True):
         video_name = videopath.split('/')[-1]
         cpdic['videoname'] = video_name
         cpdic['videopath'] = videopath
+        # print(str(index) +" " +videopath)
 
         # 截图
         thumb_name = cpdic['videoname'].split(".")[0] +"_s_"+str(cpdic['sceneid']) +".jpg"
@@ -103,7 +117,7 @@ def read_person_info(personinfo_dir, pid):
     """
     content = ''
     filename = personinfo_dir + '/' + str(pid) + '.txt'
-    with open(filename, 'r') as f:
+    with open(filename, 'r',encoding='utf8') as f:
         content = f.read()
     return content
 

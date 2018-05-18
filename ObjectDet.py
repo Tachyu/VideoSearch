@@ -54,9 +54,9 @@ class ObjectDet(BasicPart):
 
     def __init__(self, 
         logfile   = None, 
-        picShow   = False,
         single_pic_process = False,
-        isShow    = False): 
+        isShow    = False,
+        picShow   = False): 
         '''
             useconfig：读取配置文件
             logfile:   日志文件路径

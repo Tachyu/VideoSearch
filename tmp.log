@@ -1,0 +1,474 @@
+[INFO] 2018-05-15 22:34:53,409 MainSearch	INITING...
+[INFO] 2018-05-15 22:34:53,410 FaceRecog	INITING...
+[INFO] 2018-05-15 22:37:26,185 MainSearch	INITING...
+[INFO] 2018-05-15 22:37:26,185 FaceRecog	INITING...
+[INFO] 2018-05-15 22:37:26,229 ObjectDet	INITING...
+[INFO] 2018-05-15 22:37:27,845 FeatureIndex	INITING...
+[INFO] 2018-05-15 22:37:27,846 PersonFace	INITING...
+[INFO] 2018-05-15 22:37:27,857 FaceRecog	INITING...
+[INFO] 2018-05-15 22:37:27,904 MainSolr	INITING...
+[INFO] 2018-05-15 22:37:27,916 Loading index from Data/Indexs/Faces/0701&0825&1220_faces_index.bin
+[INFO] 2018-05-15 22:37:27,917 Loading optimized index.
+[INFO] 2018-05-15 22:37:27,917 searchMethod: 3
+[INFO] 2018-05-15 22:37:27,917 Total: 1014, Memory per object: 8332
+[INFO] 2018-05-15 22:37:27,920 Finished loading index
+[INFO] 2018-05-15 22:37:27,920 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:37:27,920 ef(Search)         =20
+[INFO] 2018-05-15 22:37:27,920 algoType           =2
+[INFO] 2018-05-15 22:37:27,921 Loading index from Data/Indexs/Content/0701&0825&1220_content_index.bin
+[INFO] 2018-05-15 22:37:27,946 Loading optimized index.
+[INFO] 2018-05-15 22:37:27,946 searchMethod: 3
+[INFO] 2018-05-15 22:37:27,946 Total: 1062, Memory per object: 613840
+[INFO] 2018-05-15 22:37:34,031 Finished loading index
+[INFO] 2018-05-15 22:37:34,031 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:37:34,031 ef(Search)         =20
+[INFO] 2018-05-15 22:37:34,031 algoType           =2
+[INFO] 2018-05-15 22:37:34,046 Loading index from Data/Indexs/Person/Person_person_index.bin
+[INFO] 2018-05-15 22:37:34,068 Loading optimized index.
+[INFO] 2018-05-15 22:37:34,068 searchMethod: 3
+[INFO] 2018-05-15 22:37:34,068 Total: 71, Memory per object: 8332
+[INFO] 2018-05-15 22:37:34,074 Finished loading index
+[INFO] 2018-05-15 22:37:34,075 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:37:34,075 ef(Search)         =20
+[INFO] 2018-05-15 22:37:34,075 algoType           =2
+[INFO] 2018-05-15 22:37:38,705 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:37:38,706 ef(Search)         =100
+[INFO] 2018-05-15 22:37:38,706 algoType           =2
+[INFO] 2018-05-15 22:37:52,816 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:37:52,816 ef(Search)         =100
+[INFO] 2018-05-15 22:37:52,816 algoType           =2
+[INFO] 2018-05-15 22:37:53,047 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:37:53,047 ef(Search)         =100
+[INFO] 2018-05-15 22:37:53,047 algoType           =2
+[INFO] 2018-05-15 22:38:19,200 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:38:19,210 ef(Search)         =100
+[INFO] 2018-05-15 22:38:19,210 algoType           =2
+[INFO] 2018-05-15 22:38:19,726 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:38:19,727 ef(Search)         =100
+[INFO] 2018-05-15 22:38:19,727 algoType           =2
+[INFO] 2018-05-15 22:38:24,401 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:38:24,402 ef(Search)         =100
+[INFO] 2018-05-15 22:38:24,402 algoType           =2
+[INFO] 2018-05-15 22:38:36,273 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:38:36,273 ef(Search)         =100
+[INFO] 2018-05-15 22:38:36,273 algoType           =2
+[INFO] 2018-05-15 22:38:36,918 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:38:36,918 ef(Search)         =100
+[INFO] 2018-05-15 22:38:36,918 algoType           =2
+[INFO] 2018-05-15 22:38:37,067 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:38:37,067 ef(Search)         =100
+[INFO] 2018-05-15 22:38:37,067 algoType           =2
+[INFO] 2018-05-15 22:38:43,654 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:38:43,654 ef(Search)         =100
+[INFO] 2018-05-15 22:38:43,654 algoType           =2
+[INFO] 2018-05-15 22:38:43,886 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:38:43,886 ef(Search)         =100
+[INFO] 2018-05-15 22:38:43,886 algoType           =2
+[INFO] 2018-05-15 22:38:52,890 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:38:52,891 ef(Search)         =100
+[INFO] 2018-05-15 22:38:52,891 algoType           =2
+[INFO] 2018-05-15 22:38:54,539 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:38:54,539 ef(Search)         =100
+[INFO] 2018-05-15 22:38:54,539 algoType           =2
+[INFO] 2018-05-15 22:38:54,673 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:38:54,673 ef(Search)         =100
+[INFO] 2018-05-15 22:38:54,673 algoType           =2
+[INFO] 2018-05-15 22:38:59,070 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:38:59,070 ef(Search)         =100
+[INFO] 2018-05-15 22:38:59,070 algoType           =2
+[INFO] 2018-05-15 22:38:59,242 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:38:59,242 ef(Search)         =100
+[INFO] 2018-05-15 22:38:59,242 algoType           =2
+[INFO] 2018-05-15 22:38:59,373 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:38:59,374 ef(Search)         =100
+[INFO] 2018-05-15 22:38:59,374 algoType           =2
+[INFO] 2018-05-15 22:39:00,894 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:39:00,894 ef(Search)         =100
+[INFO] 2018-05-15 22:39:00,894 algoType           =2
+[INFO] 2018-05-15 22:39:01,077 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:39:01,077 ef(Search)         =100
+[INFO] 2018-05-15 22:39:01,077 algoType           =2
+[INFO] 2018-05-15 22:39:01,499 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:39:01,499 ef(Search)         =100
+[INFO] 2018-05-15 22:39:01,499 algoType           =2
+[INFO] 2018-05-15 22:39:04,304 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:39:04,304 ef(Search)         =100
+[INFO] 2018-05-15 22:39:04,304 algoType           =2
+[INFO] 2018-05-15 22:39:04,541 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:39:04,542 ef(Search)         =100
+[INFO] 2018-05-15 22:39:04,542 algoType           =2
+[INFO] 2018-05-15 22:39:04,686 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:39:04,686 ef(Search)         =100
+[INFO] 2018-05-15 22:39:04,686 algoType           =2
+[INFO] 2018-05-15 22:39:06,547 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:39:06,547 ef(Search)         =100
+[INFO] 2018-05-15 22:39:06,547 algoType           =2
+[INFO] 2018-05-15 22:39:06,760 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:39:06,760 ef(Search)         =100
+[INFO] 2018-05-15 22:39:06,760 algoType           =2
+[INFO] 2018-05-15 22:39:11,201 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:39:11,202 ef(Search)         =100
+[INFO] 2018-05-15 22:39:11,202 algoType           =2
+[INFO] 2018-05-15 22:39:18,008 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:39:18,008 ef(Search)         =100
+[INFO] 2018-05-15 22:39:18,009 algoType           =2
+[INFO] 2018-05-15 22:39:19,110 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:39:19,110 ef(Search)         =100
+[INFO] 2018-05-15 22:39:19,110 algoType           =2
+[INFO] 2018-05-15 22:39:21,159 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:39:21,159 ef(Search)         =100
+[INFO] 2018-05-15 22:39:21,159 algoType           =2
+[INFO] 2018-05-15 22:39:47,398 MainSearch	INITING...
+[INFO] 2018-05-15 22:39:47,399 FaceRecog	INITING...
+[INFO] 2018-05-15 22:39:48,678 ObjectDet	INITING...
+[INFO] 2018-05-15 22:39:56,969 FeatureIndex	INITING...
+[INFO] 2018-05-15 22:39:56,971 PersonFace	INITING...
+[INFO] 2018-05-15 22:39:56,984 FaceRecog	INITING...
+[INFO] 2018-05-15 22:39:57,034 MainSolr	INITING...
+[INFO] 2018-05-15 22:39:57,045 Loading index from Data/Indexs/Faces/0701&0825&1220_faces_index.bin
+[INFO] 2018-05-15 22:39:57,060 Loading optimized index.
+[INFO] 2018-05-15 22:39:57,060 searchMethod: 3
+[INFO] 2018-05-15 22:39:57,060 Total: 1014, Memory per object: 8332
+[INFO] 2018-05-15 22:39:57,147 Finished loading index
+[INFO] 2018-05-15 22:39:57,147 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:39:57,147 ef(Search)         =20
+[INFO] 2018-05-15 22:39:57,147 algoType           =2
+[INFO] 2018-05-15 22:39:57,161 Loading index from Data/Indexs/Content/0701&0825&1220_content_index.bin
+[INFO] 2018-05-15 22:39:57,169 Loading optimized index.
+[INFO] 2018-05-15 22:39:57,169 searchMethod: 3
+[INFO] 2018-05-15 22:39:57,169 Total: 1062, Memory per object: 613840
+[INFO] 2018-05-15 22:40:04,231 Finished loading index
+[INFO] 2018-05-15 22:40:04,231 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:04,231 ef(Search)         =20
+[INFO] 2018-05-15 22:40:04,231 algoType           =2
+[INFO] 2018-05-15 22:40:04,232 Loading index from Data/Indexs/Person/Person_person_index.bin
+[INFO] 2018-05-15 22:40:04,349 Loading optimized index.
+[INFO] 2018-05-15 22:40:04,349 searchMethod: 3
+[INFO] 2018-05-15 22:40:04,349 Total: 71, Memory per object: 8332
+[INFO] 2018-05-15 22:40:04,356 Finished loading index
+[INFO] 2018-05-15 22:40:04,356 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:04,356 ef(Search)         =20
+[INFO] 2018-05-15 22:40:04,356 algoType           =2
+[INFO] 2018-05-15 22:40:05,843 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:05,843 ef(Search)         =100
+[INFO] 2018-05-15 22:40:05,843 algoType           =2
+[INFO] 2018-05-15 22:40:06,763 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:06,763 ef(Search)         =100
+[INFO] 2018-05-15 22:40:06,763 algoType           =2
+[INFO] 2018-05-15 22:40:06,952 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:06,952 ef(Search)         =100
+[INFO] 2018-05-15 22:40:06,952 algoType           =2
+[INFO] 2018-05-15 22:40:07,771 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:07,771 ef(Search)         =100
+[INFO] 2018-05-15 22:40:07,771 algoType           =2
+[INFO] 2018-05-15 22:40:08,000 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:08,000 ef(Search)         =100
+[INFO] 2018-05-15 22:40:08,000 algoType           =2
+[INFO] 2018-05-15 22:40:09,075 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:09,075 ef(Search)         =100
+[INFO] 2018-05-15 22:40:09,075 algoType           =2
+[INFO] 2018-05-15 22:40:09,964 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:09,964 ef(Search)         =100
+[INFO] 2018-05-15 22:40:09,964 algoType           =2
+[INFO] 2018-05-15 22:40:11,242 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:11,242 ef(Search)         =100
+[INFO] 2018-05-15 22:40:11,242 algoType           =2
+[INFO] 2018-05-15 22:40:11,370 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:11,370 ef(Search)         =100
+[INFO] 2018-05-15 22:40:11,371 algoType           =2
+[INFO] 2018-05-15 22:40:12,038 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:12,038 ef(Search)         =100
+[INFO] 2018-05-15 22:40:12,038 algoType           =2
+[INFO] 2018-05-15 22:40:12,220 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:12,220 ef(Search)         =100
+[INFO] 2018-05-15 22:40:12,220 algoType           =2
+[INFO] 2018-05-15 22:40:13,120 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:13,121 ef(Search)         =100
+[INFO] 2018-05-15 22:40:13,121 algoType           =2
+[INFO] 2018-05-15 22:40:14,075 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:14,075 ef(Search)         =100
+[INFO] 2018-05-15 22:40:14,075 algoType           =2
+[INFO] 2018-05-15 22:40:14,186 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:14,187 ef(Search)         =100
+[INFO] 2018-05-15 22:40:14,187 algoType           =2
+[INFO] 2018-05-15 22:40:15,152 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:15,153 ef(Search)         =100
+[INFO] 2018-05-15 22:40:15,153 algoType           =2
+[INFO] 2018-05-15 22:40:15,271 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:15,271 ef(Search)         =100
+[INFO] 2018-05-15 22:40:15,272 algoType           =2
+[INFO] 2018-05-15 22:40:15,385 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:15,385 ef(Search)         =100
+[INFO] 2018-05-15 22:40:15,385 algoType           =2
+[INFO] 2018-05-15 22:40:16,146 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:16,146 ef(Search)         =100
+[INFO] 2018-05-15 22:40:16,146 algoType           =2
+[INFO] 2018-05-15 22:40:16,293 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:16,293 ef(Search)         =100
+[INFO] 2018-05-15 22:40:16,294 algoType           =2
+[INFO] 2018-05-15 22:40:16,492 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:16,493 ef(Search)         =100
+[INFO] 2018-05-15 22:40:16,493 algoType           =2
+[INFO] 2018-05-15 22:40:17,254 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:17,254 ef(Search)         =100
+[INFO] 2018-05-15 22:40:17,254 algoType           =2
+[INFO] 2018-05-15 22:40:17,394 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:17,394 ef(Search)         =100
+[INFO] 2018-05-15 22:40:17,394 algoType           =2
+[INFO] 2018-05-15 22:40:17,521 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:17,522 ef(Search)         =100
+[INFO] 2018-05-15 22:40:17,522 algoType           =2
+[INFO] 2018-05-15 22:40:18,061 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:18,061 ef(Search)         =100
+[INFO] 2018-05-15 22:40:18,061 algoType           =2
+[INFO] 2018-05-15 22:40:18,231 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:18,231 ef(Search)         =100
+[INFO] 2018-05-15 22:40:18,231 algoType           =2
+[INFO] 2018-05-15 22:40:18,780 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:18,780 ef(Search)         =100
+[INFO] 2018-05-15 22:40:18,780 algoType           =2
+[INFO] 2018-05-15 22:40:20,452 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:20,452 ef(Search)         =100
+[INFO] 2018-05-15 22:40:20,452 algoType           =2
+[INFO] 2018-05-15 22:40:20,921 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:20,921 ef(Search)         =100
+[INFO] 2018-05-15 22:40:20,921 algoType           =2
+[INFO] 2018-05-15 22:40:21,475 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:21,476 ef(Search)         =100
+[INFO] 2018-05-15 22:40:21,476 algoType           =2
+[INFO] 2018-05-15 22:40:54,485 MainSearch	INITING...
+[INFO] 2018-05-15 22:40:54,487 FaceRecog	INITING...
+[INFO] 2018-05-15 22:40:54,537 ObjectDet	INITING...
+[INFO] 2018-05-15 22:40:58,148 FeatureIndex	INITING...
+[INFO] 2018-05-15 22:40:58,149 PersonFace	INITING...
+[INFO] 2018-05-15 22:40:58,165 FaceRecog	INITING...
+[INFO] 2018-05-15 22:40:58,211 MainSolr	INITING...
+[INFO] 2018-05-15 22:40:58,227 Loading index from Data/Indexs/Faces/0701&0825&1220_faces_index.bin
+[INFO] 2018-05-15 22:40:58,234 Loading optimized index.
+[INFO] 2018-05-15 22:40:58,234 searchMethod: 3
+[INFO] 2018-05-15 22:40:58,234 Total: 1014, Memory per object: 8332
+[INFO] 2018-05-15 22:40:58,321 Finished loading index
+[INFO] 2018-05-15 22:40:58,321 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:40:58,321 ef(Search)         =20
+[INFO] 2018-05-15 22:40:58,321 algoType           =2
+[INFO] 2018-05-15 22:40:58,322 Loading index from Data/Indexs/Content/0701&0825&1220_content_index.bin
+[INFO] 2018-05-15 22:40:58,326 Loading optimized index.
+[INFO] 2018-05-15 22:40:58,326 searchMethod: 3
+[INFO] 2018-05-15 22:40:58,326 Total: 1062, Memory per object: 613840
+[INFO] 2018-05-15 22:41:05,180 Finished loading index
+[INFO] 2018-05-15 22:41:05,180 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:05,180 ef(Search)         =20
+[INFO] 2018-05-15 22:41:05,180 algoType           =2
+[INFO] 2018-05-15 22:41:05,181 Loading index from Data/Indexs/Person/Person_person_index.bin
+[INFO] 2018-05-15 22:41:05,189 Loading optimized index.
+[INFO] 2018-05-15 22:41:05,189 searchMethod: 3
+[INFO] 2018-05-15 22:41:05,190 Total: 71, Memory per object: 8332
+[INFO] 2018-05-15 22:41:05,196 Finished loading index
+[INFO] 2018-05-15 22:41:05,196 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:05,196 ef(Search)         =20
+[INFO] 2018-05-15 22:41:05,197 algoType           =2
+[INFO] 2018-05-15 22:41:08,839 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:08,839 ef(Search)         =100
+[INFO] 2018-05-15 22:41:08,840 algoType           =2
+[INFO] 2018-05-15 22:41:10,570 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:10,570 ef(Search)         =100
+[INFO] 2018-05-15 22:41:10,570 algoType           =2
+[INFO] 2018-05-15 22:41:10,762 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:10,762 ef(Search)         =100
+[INFO] 2018-05-15 22:41:10,762 algoType           =2
+[INFO] 2018-05-15 22:41:11,770 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:11,770 ef(Search)         =100
+[INFO] 2018-05-15 22:41:11,770 algoType           =2
+[INFO] 2018-05-15 22:41:11,990 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:11,990 ef(Search)         =100
+[INFO] 2018-05-15 22:41:11,991 algoType           =2
+[INFO] 2018-05-15 22:41:13,026 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:13,026 ef(Search)         =100
+[INFO] 2018-05-15 22:41:13,026 algoType           =2
+[INFO] 2018-05-15 22:41:13,664 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:13,664 ef(Search)         =100
+[INFO] 2018-05-15 22:41:13,664 algoType           =2
+[INFO] 2018-05-15 22:41:14,476 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:14,476 ef(Search)         =100
+[INFO] 2018-05-15 22:41:14,476 algoType           =2
+[INFO] 2018-05-15 22:41:14,610 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:14,610 ef(Search)         =100
+[INFO] 2018-05-15 22:41:14,610 algoType           =2
+[INFO] 2018-05-15 22:41:15,467 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:15,467 ef(Search)         =100
+[INFO] 2018-05-15 22:41:15,468 algoType           =2
+[INFO] 2018-05-15 22:41:15,649 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:15,649 ef(Search)         =100
+[INFO] 2018-05-15 22:41:15,649 algoType           =2
+[INFO] 2018-05-15 22:41:16,318 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:16,319 ef(Search)         =100
+[INFO] 2018-05-15 22:41:16,319 algoType           =2
+[INFO] 2018-05-15 22:41:17,348 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:17,348 ef(Search)         =100
+[INFO] 2018-05-15 22:41:17,348 algoType           =2
+[INFO] 2018-05-15 22:41:17,461 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:17,461 ef(Search)         =100
+[INFO] 2018-05-15 22:41:17,461 algoType           =2
+[INFO] 2018-05-15 22:41:18,693 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:18,693 ef(Search)         =100
+[INFO] 2018-05-15 22:41:18,693 algoType           =2
+[INFO] 2018-05-15 22:41:18,814 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:18,815 ef(Search)         =100
+[INFO] 2018-05-15 22:41:18,815 algoType           =2
+[INFO] 2018-05-15 22:41:18,924 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:18,925 ef(Search)         =100
+[INFO] 2018-05-15 22:41:18,925 algoType           =2
+[INFO] 2018-05-15 22:41:19,876 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:19,876 ef(Search)         =100
+[INFO] 2018-05-15 22:41:19,876 algoType           =2
+[INFO] 2018-05-15 22:41:20,030 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:20,030 ef(Search)         =100
+[INFO] 2018-05-15 22:41:20,030 algoType           =2
+[INFO] 2018-05-15 22:41:20,212 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:20,213 ef(Search)         =100
+[INFO] 2018-05-15 22:41:20,213 algoType           =2
+[INFO] 2018-05-15 22:41:20,754 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:20,754 ef(Search)         =100
+[INFO] 2018-05-15 22:41:20,754 algoType           =2
+[INFO] 2018-05-15 22:41:20,875 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:20,875 ef(Search)         =100
+[INFO] 2018-05-15 22:41:20,875 algoType           =2
+[INFO] 2018-05-15 22:41:21,006 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:21,006 ef(Search)         =100
+[INFO] 2018-05-15 22:41:21,006 algoType           =2
+[INFO] 2018-05-15 22:41:21,818 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:21,818 ef(Search)         =100
+[INFO] 2018-05-15 22:41:21,818 algoType           =2
+[INFO] 2018-05-15 22:41:22,020 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:22,021 ef(Search)         =100
+[INFO] 2018-05-15 22:41:22,021 algoType           =2
+[INFO] 2018-05-15 22:41:22,810 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:22,811 ef(Search)         =100
+[INFO] 2018-05-15 22:41:22,811 algoType           =2
+[INFO] 2018-05-15 22:41:23,972 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:23,972 ef(Search)         =100
+[INFO] 2018-05-15 22:41:23,972 algoType           =2
+[INFO] 2018-05-15 22:41:24,456 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:24,456 ef(Search)         =100
+[INFO] 2018-05-15 22:41:24,457 algoType           =2
+[INFO] 2018-05-15 22:41:25,004 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:41:25,004 ef(Search)         =100
+[INFO] 2018-05-15 22:41:25,004 algoType           =2
+[INFO] 2018-05-15 22:44:26,817 MainSearch	INITING...
+[INFO] 2018-05-15 22:44:26,818 FaceRecog	INITING...
+[INFO] 2018-05-15 22:44:28,597 ObjectDet	INITING...
+[INFO] 2018-05-15 22:44:33,768 FeatureIndex	INITING...
+[INFO] 2018-05-15 22:44:33,770 PersonFace	INITING...
+[INFO] 2018-05-15 22:44:33,780 FaceRecog	INITING...
+[INFO] 2018-05-15 22:44:33,832 MainSolr	INITING...
+[INFO] 2018-05-15 22:44:33,841 Loading index from Data/Indexs/Faces/0701&0825&1220_faces_index.bin
+[INFO] 2018-05-15 22:44:33,871 Loading optimized index.
+[INFO] 2018-05-15 22:44:33,872 searchMethod: 3
+[INFO] 2018-05-15 22:44:33,872 Total: 1014, Memory per object: 8332
+[INFO] 2018-05-15 22:44:33,958 Finished loading index
+[INFO] 2018-05-15 22:44:33,958 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:33,959 ef(Search)         =20
+[INFO] 2018-05-15 22:44:33,959 algoType           =2
+[INFO] 2018-05-15 22:44:33,972 Loading index from Data/Indexs/Content/0701&0825&1220_content_index.bin
+[INFO] 2018-05-15 22:44:33,980 Loading optimized index.
+[INFO] 2018-05-15 22:44:33,980 searchMethod: 3
+[INFO] 2018-05-15 22:44:33,980 Total: 1062, Memory per object: 613840
+[INFO] 2018-05-15 22:44:41,999 Finished loading index
+[INFO] 2018-05-15 22:44:41,999 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:42,000 ef(Search)         =20
+[INFO] 2018-05-15 22:44:42,000 algoType           =2
+[INFO] 2018-05-15 22:44:42,097 Loading index from Data/Indexs/Person/Person_person_index.bin
+[INFO] 2018-05-15 22:44:42,360 Loading optimized index.
+[INFO] 2018-05-15 22:44:42,360 searchMethod: 3
+[INFO] 2018-05-15 22:44:42,360 Total: 71, Memory per object: 8332
+[INFO] 2018-05-15 22:44:42,484 Finished loading index
+[INFO] 2018-05-15 22:44:42,484 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:42,484 ef(Search)         =20
+[INFO] 2018-05-15 22:44:42,484 algoType           =2
+[INFO] 2018-05-15 22:44:49,690 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:49,690 ef(Search)         =100
+[INFO] 2018-05-15 22:44:49,690 algoType           =2
+[INFO] 2018-05-15 22:44:50,986 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:50,986 ef(Search)         =100
+[INFO] 2018-05-15 22:44:50,986 algoType           =2
+[INFO] 2018-05-15 22:44:51,412 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:51,412 ef(Search)         =100
+[INFO] 2018-05-15 22:44:51,413 algoType           =2
+[INFO] 2018-05-15 22:44:52,215 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:52,215 ef(Search)         =100
+[INFO] 2018-05-15 22:44:52,215 algoType           =2
+[INFO] 2018-05-15 22:44:52,661 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:52,661 ef(Search)         =100
+[INFO] 2018-05-15 22:44:52,661 algoType           =2
+[INFO] 2018-05-15 22:44:53,569 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:53,570 ef(Search)         =100
+[INFO] 2018-05-15 22:44:53,570 algoType           =2
+[INFO] 2018-05-15 22:44:54,339 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:54,340 ef(Search)         =100
+[INFO] 2018-05-15 22:44:54,340 algoType           =2
+[INFO] 2018-05-15 22:44:55,068 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:55,068 ef(Search)         =100
+[INFO] 2018-05-15 22:44:55,068 algoType           =2
+[INFO] 2018-05-15 22:44:55,204 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:55,205 ef(Search)         =100
+[INFO] 2018-05-15 22:44:55,205 algoType           =2
+[INFO] 2018-05-15 22:44:55,812 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:55,812 ef(Search)         =100
+[INFO] 2018-05-15 22:44:55,812 algoType           =2
+[INFO] 2018-05-15 22:44:56,020 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:56,021 ef(Search)         =100
+[INFO] 2018-05-15 22:44:56,021 algoType           =2
+[INFO] 2018-05-15 22:44:56,480 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:56,480 ef(Search)         =100
+[INFO] 2018-05-15 22:44:56,480 algoType           =2
+[INFO] 2018-05-15 22:44:57,201 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:57,201 ef(Search)         =100
+[INFO] 2018-05-15 22:44:57,201 algoType           =2
+[INFO] 2018-05-15 22:44:57,343 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:57,343 ef(Search)         =100
+[INFO] 2018-05-15 22:44:57,343 algoType           =2
+[INFO] 2018-05-15 22:44:57,859 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:57,859 ef(Search)         =100
+[INFO] 2018-05-15 22:44:57,859 algoType           =2
+[INFO] 2018-05-15 22:44:58,014 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:58,014 ef(Search)         =100
+[INFO] 2018-05-15 22:44:58,014 algoType           =2
+[INFO] 2018-05-15 22:44:58,135 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:58,135 ef(Search)         =100
+[INFO] 2018-05-15 22:44:58,135 algoType           =2
+[INFO] 2018-05-15 22:44:58,663 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:58,663 ef(Search)         =100
+[INFO] 2018-05-15 22:44:58,663 algoType           =2
+[INFO] 2018-05-15 22:44:58,821 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:58,821 ef(Search)         =100
+[INFO] 2018-05-15 22:44:58,821 algoType           =2
+[INFO] 2018-05-15 22:44:59,009 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:59,009 ef(Search)         =100
+[INFO] 2018-05-15 22:44:59,009 algoType           =2
+[INFO] 2018-05-15 22:44:59,502 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:59,502 ef(Search)         =100
+[INFO] 2018-05-15 22:44:59,502 algoType           =2
+[INFO] 2018-05-15 22:44:59,634 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:59,634 ef(Search)         =100
+[INFO] 2018-05-15 22:44:59,634 algoType           =2
+[INFO] 2018-05-15 22:44:59,768 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:44:59,768 ef(Search)         =100
+[INFO] 2018-05-15 22:44:59,768 algoType           =2
+[INFO] 2018-05-15 22:45:00,453 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:45:00,453 ef(Search)         =100
+[INFO] 2018-05-15 22:45:00,453 algoType           =2
+[INFO] 2018-05-15 22:45:00,626 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:45:00,626 ef(Search)         =100
+[INFO] 2018-05-15 22:45:00,626 algoType           =2
+[INFO] 2018-05-15 22:45:01,360 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:45:01,360 ef(Search)         =100
+[INFO] 2018-05-15 22:45:01,360 algoType           =2
+[INFO] 2018-05-15 22:45:01,853 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:45:01,853 ef(Search)         =100
+[INFO] 2018-05-15 22:45:01,854 algoType           =2
+[INFO] 2018-05-15 22:45:02,546 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:45:02,546 ef(Search)         =100
+[INFO] 2018-05-15 22:45:02,546 algoType           =2
+[INFO] 2018-05-15 22:45:03,318 Set HNSW query-time parameters:
+[INFO] 2018-05-15 22:45:03,318 ef(Search)         =100
+[INFO] 2018-05-15 22:45:03,319 algoType           =2

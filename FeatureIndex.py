@@ -206,9 +206,9 @@ class FeatureIndex(BasicPart):
         """
         self.index_prefixs=index_prefixs
         self.person_index_prefixs=person_index_prefixs    
-        self.load_face_index()
-        self.load_cont_index()
-        self.load_person_index()
+        self.load_face_index(index_prefixs)
+        self.load_cont_index(index_prefixs)
+        self.load_person_index(person_index_prefixs)
         
 
     def create_person_index(self, person_feats, person_ids, index_prefix):
@@ -231,7 +231,7 @@ class FeatureIndex(BasicPart):
         return index
 
 
-    def load_person_index(self):
+    def load_person_index(self,person_index_prefixs=["Person"]):
         """将人物人脸特征索引载入内存
            增加载入多个索引的功能
         """
@@ -239,7 +239,7 @@ class FeatureIndex(BasicPart):
             pass
         else:
             self.ispersLoad = True
-            for index_prefix in self.person_index_prefixs:
+            for index_prefix in person_index_prefixs:
                 person_index = self.__create_index()
                 index_dir, id_dir = self.__get_index_id_path(index_prefix, 'person_index')            
                 person_index.loadIndex(index_dir)
@@ -248,7 +248,7 @@ class FeatureIndex(BasicPart):
                 self.person_id_list_list.append(person_id_list)
                 
 
-    def load_face_index(self):
+    def load_face_index(self, index_prefixs):
         """将人脸特征索引载入内存
         增加载入多个索引的功能
         """
@@ -257,7 +257,7 @@ class FeatureIndex(BasicPart):
         else:
             self.isfaceLoad = True
             # 读文件
-            for index_prefix in self.index_prefixs:
+            for index_prefix in index_prefixs:
                 face_index = self.__create_index()
                 index_dir, id_dir = self.__get_index_id_path(index_prefix, 'faces_index')            
                 face_index.loadIndex(index_dir)
@@ -266,7 +266,7 @@ class FeatureIndex(BasicPart):
                 self.face_id_list_list.append(face_id_list)
         pass
     
-    def load_cont_index(self):
+    def load_cont_index(self, index_prefixs):
         """将场景特征索引载入内存
         """
         if self.iscontLoad:
@@ -274,7 +274,7 @@ class FeatureIndex(BasicPart):
         else:
             self.iscontLoad = True
             # 读文件
-            for index_prefix in self.index_prefixs:
+            for index_prefix in index_prefixs:
                 cont_index = self.__create_index()
                 index_dir, id_dir = self.__get_index_id_path(index_prefix, 'content_index')            
                 cont_index.loadIndex(index_dir)
@@ -295,11 +295,11 @@ class FeatureIndex(BasicPart):
             K {int} --结果数 (default: {100})
         """
         if index_type == 'faces_index':
-            self.load_face_index()
+            self.load_face_index([])
             id_list_list = self.face_id_list_list
             index_list   = self.face_index_list
         elif index_type == 'content_index':
-            self.load_cont_index()
+            self.load_cont_index([])
             id_list_list = self.cont_id_list_list
             index_list   = self.cont_index_list
         else:

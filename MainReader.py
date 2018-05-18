@@ -32,7 +32,8 @@ class MainReader(BasicPart):
     def __init__(self, 
         videoinfo, 
         logfile=None, 
-        isShow=False):
+        isShow=False,
+        savepic=False):
         """初始化
         
         Arguments:
@@ -50,10 +51,10 @@ class MainReader(BasicPart):
         self.item_list = []
         # 人物识别
         self.pf = PersonFace(True)
-        fi = FeatureIndex(True, person_index_prefixs=["Person"])
-        fi.load_person_index()
+        fi = FeatureIndex(True)
+        fi.load_person_index(["Person"])
         self.pf.setFeatureIndex(fi)
-
+        self.savepic=savepic
         # solr
         self.solrhandler = MainSolr(logfile, isShow)
         pass
@@ -95,7 +96,7 @@ class MainReader(BasicPart):
         from FaceRecog import FaceRecog
         process_line.append(FaceRecog(isShow=self.isShow, picShow=False))
 
-        self.videosample = VideoSample(isShow = self.isShow, save_images = False)
+        self.videosample = VideoSample(isShow = self.isShow, save_images = self.savepic)
         i_queue, i_lock  = self.videosample.sample(self.videoinfo['name'])
         
         self.s_time = time.time()
@@ -323,6 +324,9 @@ if __name__ == "__main__":
     # main("Data/Videos/20170701_small.mp4",isShow=False).start()
     videoinfo = {}
     date = '20171220'
+    # date = '20170825'
+    # date = '20170701'
+    
     # date = '20171215'
     
     videoinfo['name'] = "Data/Videos/%s.mp4"%date
@@ -330,5 +334,5 @@ if __name__ == "__main__":
     with open('Data/Videos/Descriptions/%s.txt'%date,'r') as df:
         des = df.read()
     videoinfo['descrption'] = des
-    MainReader(videoinfo,isShow=True).start()
+    MainReader(videoinfo,isShow=True,savepic=True).start()
     

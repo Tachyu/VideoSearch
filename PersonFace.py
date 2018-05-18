@@ -119,9 +119,11 @@ class PersonFace(BasicPart):
             personid, personname
         """
         face_dic = self.fr.extract_image_face_feature(imagename)
-
-        personid, personname = self.idenity(face_dic['feats'][0])
-
+        if len(face_dic['feats']) > 0:
+            personid, personname = self.idenity(face_dic['feats'][0])
+        else:
+            personid=-1
+            personname="无人物"            
         return personid, personname
         # print(result)
 
@@ -137,7 +139,7 @@ class PersonFace(BasicPart):
 
         # 若高于最远距离,则为未知人物,返回None,''
         if distance[0] > self.maxdistance:
-            personid = None
+            personid = -1
             personname = 'unknown'
         else:            
             # 确定人物身份:

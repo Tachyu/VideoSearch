@@ -8,7 +8,7 @@ from DBHandler import DBHandler
 from PersonFace import PersonFace
 from MainSolr import MainSolr
 from PublicTool import *
-import os,json
+import os,json,time
 
 try:
     from PIL import Image, ImageDraw
@@ -21,12 +21,12 @@ class MainSearch(BasicPart):
         max_len=1000, logfile=None, isShow=False):
         BasicPart.__init__(self, logfile, isShow)
         self.imagename     = ''
-        self.facerecog     = FaceRecog(logfile, isShow)
-        self.objectdetect  = ObjectDet(logfile, isShow, single_pic_process=True)
+        self.facerecog     = FaceRecog(logfile=logfile, isShow=isShow)
+        self.objectdetect  = ObjectDet(logfile, single_pic_process=True,isShow=isShow, picShow=False)
         self.dbhandler     = DBHandler()
-        self.searchfeature = FeatureIndex(logfile,isShow)
-        self.personface    = PersonFace(logfile, isShow=isShow)
-        self.solrobj       = MainSolr(logfile, isShow)
+        self.searchfeature = FeatureIndex(logfile=logfile, isShow=isShow)
+        self.personface    = PersonFace(logfile=logfile, isShow=isShow)
+        self.solrobj       = MainSolr(logfile=logfile, isShow=isShow)
 
         self.max_len = max_len
         # 默认阈值
@@ -48,6 +48,11 @@ class MainSearch(BasicPart):
         self.personface.setFeatureIndex(self.searchfeature)
 
     def set_image(self,imagename):
+        """设置要搜索的图片路径
+        
+        Arguments:
+            imagename {string} -- 图片路径
+        """
         self.imagename     = imagename
 
     def read_config(self):
@@ -109,13 +114,12 @@ class MainSearch(BasicPart):
         # 截取
         return max_item
 
-    def search_face(self):
+    def search_face(self):        
         pic_face_dic = self.facerecog.extract_image_face_feature(self.imagename)
         num_faces = len(pic_face_dic['feats'])
-        print(pic_face_dic['landmarks'])
         if num_faces == 0:
             self.lg("Face not found")
-            return None
+            return [],[]
         
         # 只搜索第一个脸
         query_feat = pic_face_dic['feats'][0]
@@ -172,6 +176,7 @@ class MainSearch(BasicPart):
         json_scene_list = to_json_scene(self.thumb_info, s_list,False)
 
         result_json = {}
+        result_json['keywords'] = text
         result_json['video_num'] = len(json_video_list)  
         result_json['video_list'] = json_video_list
 
@@ -179,28 +184,44 @@ class MainSearch(BasicPart):
         result_json['scene_list'] = json_scene_list
         return result_json
 
+    def joinsearch(self, image, keywords):
+        """图片文字联合搜索
+        
+        Arguments:
+            image {string} -- 图片路径
+            keywords {string} -- 关键词
+        """
+        keywords_json = self.searchKeywords(keywords)
+        self.set_image(image)
+        image_json = self.searchImage()
+        
 
-    def get_search_result_JSON(self):
-        """返回json格式的检索
+    def searchImage(self):
+        """返回json格式的图片检索结果
         TODO: 完成物体搜索结果
         """
+        fs = time.time()
         face_idlist, face_distance = self.search_face()[:self.max_len]
         face_results = self.get_face_to_video_sceneinfo(face_idlist)
         self.lg('FACE:' + str(len(face_idlist)))
+        fe = time.time()
         
+        cs = time.time()
         cont_idlist, object_list, cont_distance = self.search_pic()
         cont_idlist = cont_idlist[:self.max_len]
         cont_results = self.get_content_to_video_sceneinfo(cont_idlist)
         self.lg('CONT:' + str(len(cont_idlist)))
+        ce = time.time()
 
+        ts = time.time()
         result_json = {}
         result_json['face_scene_num'] = len(face_idlist)  
         result_json['face_scene_list'] = to_json_scene(self.thumb_info, face_results)
-        result_json['face_dist_list'] = face_distance       
+        result_json['face_dist_list'] = list(face_distance)       
 
         result_json['content_scene_num'] = len(cont_idlist)  
-        result_json['content_scene_list'] = to_json_scene(self.thumb_info, face_results)
-        result_json['content_dist_list'] = cont_distance       
+        result_json['content_scene_list'] = to_json_scene(self.thumb_info, cont_results)
+        result_json['content_dist_list'] = list(cont_distance)       
         
         # 交集
         fsids, fvids = extrace_ids(face_results)
@@ -210,10 +231,12 @@ class MainSearch(BasicPart):
         both_video_list = set(fvids) | set(cvids)
         result_json['both_video_num']  = len(both_video_list)
         result_json['both_scene_num']  = len(both_scene_list)
-        result_json['both_scene_list'] = to_json_scene(self.thumb_info, face_results)
+        result_json['both_scene_list'] = to_json_scene(self.thumb_info, both_scene_list)
 
+        te = time.time()     
+
+        ps = time.time()   
         # 识别人物
-        print(self.imagename)
         pid, pname = self.personface.identify_pic_person(self.imagename)
         # 读取存储的人物简介
         pinfo = ''
@@ -225,19 +248,26 @@ class MainSearch(BasicPart):
         # 物体集合
         result_json['object_num']  = len(object_list)
         result_json['object_list'] = object_list
-
+        pe = time.time()
+        print("%.2f, %.2f, %.2f,%.2f"%(fe-fs, ce-cs, pe-ts, pe-fs))
         return result_json
 
 
 if __name__ == '__main__':  
-    imagename="Data/Tmp/1.jpg"
-    ms = MainSearch(max_len = 10, isShow=True)
-    # ms.create_indexs('1215&1220',['122','123'],True)
+    imagename="Data/Tmp/A/20170825.mp4.Scene-161-IN.jpg"
+    ms = MainSearch(max_len = 100, isShow=False,logfile="tmp.log")
+    # ms.create_indexs('0701&0825&1220',['130','131','132'],True)
     ms.setThreshold(800,800)
-    # ms.load_index(['1215&1220'],['Person'])
-    # ms.set_image(imagename)
-    # print(ms.get_search_result_JSON())
-    print(ms.searchKeywords("张德江"))
+    ms.load_index(['0701&0825&1220'],['Person'])
+    pic_list = ['Data/Tmp/A/','Data/Tmp/B/','Data/Tmp/C/']
+    for i, picdir in enumerate(pic_list):
+        pics = os.listdir(picdir)
+        for pic in pics:
+            # st = time.time()
+            ms.set_image(picdir+pic)
+            ms.searchImage()
+    # print()
+    #print(ms.searchKeywords("张德江"))
     
     # idlist = ms.search_face()[:10]
     # results = ms.get_face_to_video_sceneinfo(idlist)  

@@ -1,3 +1,4 @@
+# coding:utf-8
 import os
 from gevent import monkey
 monkey.patch_all()
@@ -11,11 +12,16 @@ from werkzeug import secure_filename
 from MainSearch import MainSearch
 import tensorflow as tf
 import time
+from PublicTool import *
+
+face_thresh = 400
+cont_thresh = 400
 
 g = tf.Graph()
 with g.as_default():
-    ms = MainSearch(prefix='0825-1031-1030', max_len = 120, imagename="Data/Tmp/tmp.png",isShow=True)
-    ms.load_index()
+    ms = MainSearch(max_len = 120, isShow=True)
+    ms.setThreshold(800,800)
+    ms.load_index(['0701&0825&1220'],['Person'])
     print('Ready Let`s GO!')
 
 app = Flask(__name__)
@@ -30,46 +36,21 @@ def response_to(message, iserror):
     resp.headers['Access-Control-Allow-Origin'] = '*'
     return resp
 
+def writetojson(json_obj):
+    # print(json_obj)
+    json_str = json.dumps(json_obj,cls=MyEncoder)
+    ud = str(uuid.uuid4())
+    js_name = 'Data/Videos/UUID/' + ud + ".json"
+    message = {}
+    message['jsname'] = ud
+    with open('/var/www/html/SiteVideo/'+js_name,'w',encoding='utf8') as js:
+        js.write(json_str)
+    return ud, message
+
+
 @app.route('/uploadpicture', methods=['POST'])
 def uploadpic():
-    testjson    = '''
-    {
-    "response_id":"12",
-    "face_scene_num":"12",
-    "face_scene_list":[
-{
-    "videoid":1,
-    "videoname":"20170701.mp4",
-    "addtime":"2017/07/01 11:00:00",  
-    "sceneid":1,  
-    "starttime":10,
-    "length":5,
-    "objects":"人，桌子，椅子",
-    "videopath":"Data/Video/20170701_tiny.mp4",
-    "thumb":"Data/thumbs/20170701_1.jpg"
-}],
-    "content_scene_num":"12",
-    "content_scene_list":[
-{
-    "videoid":1,
-    "videoname":"20170701.mp4",
-    "addtime":"2017/07/01 11:00:00",  
-    "sceneid":1,  
-    "starttime":10,
-    "length":5,
-    "objects":"人，桌子，椅子",
-    "videopath":"Data/Video/20170701_tiny.mp4",
-    "thumb":"Data/thumbs/20170701_2.jpg"
-}]
-
-}
-    '''
-    # picid = request.form['id']
-    # picdata = request.files['image']
-    # print(request)
-    # print(request.files['file'])
     time_start=time.time();
-    # prefix = 'Data/Tmp/'
     prefix = '/var/www/html/SiteVideo/upload/'
     web_prefix = 'upload/'    
     picdata = request.files['file']
@@ -77,42 +58,43 @@ def uploadpic():
     pic_name = secure_filename(picdata.filename)
     img_path = os.path.join(prefix,pic_name)
     picdata.save(img_path)
-    time.sleep(1)
+    # time.sleep(1)
     with g.as_default():
+        ms.setThreshold(face_thresh, cont_thresh)
         ms.set_image(img_path)
-        testjson = ms.get_search_result_JSON()
+        testjson = ms.searchImage()
     time_stop=time.time();
     
     testjson['querytime'] = 1000* (time_stop-time_start)   
     testjson['uploadpicture'] = web_prefix + pic_name
 
+    ud, message = writetojson(testjson)
 
-    json_str = json.dumps(testjson)
-    ud = str(uuid.uuid4())
-    js_name = 'Data/Videos/UUID/' + ud + ".json"
-    # print(json_str)
-    message = {}
-    message['jsname'] = ud
-    s = 'H:/xampp/htdocs/SiteVideo/'
-    with open('/var/www/html/SiteVideo/'+js_name,'w',encoding='utf8') as js:
-        js.write(json_str)
-    # basedir = os.path.abspath(os.path.dirname(__file__))
-
-    # print(picdata.filename)
-    
-    # picdata.save(img_path)
-
-    # excute_search()
-    
-    # message['imagename'] = img_path
-    # print("RETURE RESPONSE")
     return response_to(message,False)
 
 @app.route('/search', methods=['POST'])
 def search():
+    time_start=time.time();
     keywords = request.form['keywords']
-    print(keywords)
-    return 'POST '+keydwords
+    with g.as_default():
+        testjson = ms.searchKeywords(keywords)
+    time_stop=time.time();
+    testjson['querytime'] = 1000* (time_stop-time_start)   
+
+    ud, message = writetojson(testjson)
+
+    return response_to(message,False)
+
+@app.route('/jointsearch', methods=['POST'])
+def jointsearch():
+    pass
+@app.route('/setthresh', methods=['POST'])
+def setthresh():
+    face_thresh = request.form['face_thresh']
+    cont_thresh = request.form['content_thresh']
+    message = {}
+    message['jsname'] = 'OK'
+    return response_to(message, False)
 
 
 if __name__ == "__main__":

@@ -119,8 +119,10 @@ class VideoSample(BasicPart):
 
 
 if __name__ == "__main__":
-    vname         = "Data/Videos/20170701_small.mp4"
-    # vname         = "Data/Videos/person.mp4"
+    # vname         = "Data/Videos/20170701_small.mp4"
+    vname         = "Data/Videos/person.mp4"
+    vname         = "Data/Videos/20170701.mp4"
+    
     # vname         = "Data/Videos/tiny.mp4"
     
     
