@@ -15,10 +15,8 @@ class ComputeSim():
         image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         h = cv2.calcHist([image_hsv], [0], None, [180], [0,180])
         s = cv2.calcHist([image_hsv], [1], None, [256], [0,256])
-        v = cv2.calcHist([image_hsv], [2], None, [256], [0,256])
-        hist = np.vstack(h,s)
-        hist = np.vstack(hist,v)        
-        return hist
+        v = cv2.calcHist([image_hsv], [2], None, [256], [0,256])      
+        return h,s,v
 
     def showimage(self,image):
         # image = Image.fromarray(cv2.cvtColor(image,cv2.COLOR_HSV2RGB)) 
@@ -120,32 +118,41 @@ class ComputeSim():
         result = np.sum(degrees)
         return result
 
+    def calculate_entropy_single(self,channel):
+        channel = channel / np.sum(channel)
+        non_zero = np.nonzero(channel) 
+        entropy = -1 * np.sum(channel[non_zero] * np.log(channel[non_zero]))
+        return entropy
+
+    def cal_entropy(self,hsv):
+        h,s,v = hsv
+
+        
+
 
 if __name__ == '__main__':
     cs = ComputeSim()
-    image1 = cs.readimage('t1.JPG')
-    image2 = cs.readimage('t2.JPG')
+    image1 = cs.readimage('1.jpg')
+    image2 = cs.readimage('2.jpg')
     
     np.random.seed(1234)
+    h,s,v = cs.computehist(image1)
+    print(np.sum(h))
+    # print(np.sum(hsv[0]))    
+    # en = cs.calculate_entropy_single([0.2,0.1,0.7])
+    en = cs.calculate_entropy_single(h)    
+    print(en)
+    en = cs.calculate_entropy_single(s)    
+    print(en)
+    en = cs.calculate_entropy_single(v)    
+    print(en)
+    # st = time.time()
+    # delta = cs.calculate_delta(image1, image2)[3]
+    # degree = cs.caldegree(image1, image2)
+    # et = time.time()
+    # print(delta)
+    # print(degree)
 
-    # hist1 = np.random.randint(0,10,(3,10,10))
-    # hist2 = np.random.randint(0,10,(3,10,10))
-    # print(hist1.shape)
-    st = time.time()
-    # cs.calculate_np(image1, image2)
-    delta = cs.calculate_delta(image1, image2)[3]
-    degree = cs.caldegree(image1, image2)
-    et = time.time()
-    # print(et-st)
-    print(delta)
-    print(degree)
-    
-    # caldiff(hists1[4],hists1[4])
-    # hsv_mask = [0.9,0.3,0.1]
-    # print(hists[0].shape)  
-    # # showimage(regions[0])
-    # showimage(regions[1])
-    # showimage(regions[5])
     
     
     

@@ -64,33 +64,28 @@ class MainSearch(BasicPart):
         self.thumb_info = (self.thumb_size, self.thumb_prefix, self.thumb_web_prefix)
          
     
-    def __get_db_info(self, id_type, id_list, distance):
+    def __get_db_info(self, id_type, id_list):
         """根据id查询数据库
         id_type = 'face' or 'content'
         """
         results = []
-        result_distance = []
         if id_type == 'face':
-            for index, faceid in enumerate(id_list):
+            for faceid in id_list:
                 v_s_info = self.dbhandler.search_scene_video_info_by_faceid(int(faceid))
                 results += [SceneInfo(v_s_item) for v_s_item in v_s_info]
-                for i in range(len(v_s_info)):
-                    result_distance.append(distance[index])
         else:
-            for index, picid in enumerate(id_list):
+            for picid in id_list:
                 v_s_info = self.dbhandler.search_scene_video_info_by_picid(int(picid))
                 results += [SceneInfo(v_s_item) for v_s_item in v_s_info]
-                for i in range(len(v_s_info)):
-                    result_distance.append(distance[index])
-        return results, result_distance
+        return set(results)
     
-    def get_face_to_video_sceneinfo(self, faceidlist, distance):
-        results,re_distance = self.__get_db_info('face', faceidlist, distance)
-        return results,re_distance
+    def get_face_to_video_sceneinfo(self, faceidlist):
+        results = self.__get_db_info('face', faceidlist)
+        return results
 
-    def get_content_to_video_sceneinfo(self, picidlist, distance):
-        results,re_distance = self.__get_db_info('content', picidlist, distance)
-        return results,re_distance
+    def get_content_to_video_sceneinfo(self, picidlist):
+        results = self.__get_db_info('content', picidlist)
+        return results
     
     def create_indexs(self, perfix, featidlist=[], isSave=True):
         """创建特征的索引文件
@@ -134,19 +129,29 @@ class MainSearch(BasicPart):
         max_index = self.selectByDistance(distance, self.faceThreshhold)
         query_result = query_result[:max_index]
         distance = distance[:max_index]
+        sceenid_unique = set(query_result)
         return query_result, distance
 
     def search_pic(self):
+        obj_ts = time.time()
         image_obj_dic = self.objectdetect.extract_image_feature(self.imagename)
         query_feat = image_obj_dic['feat']
         tag_name   = image_obj_dic['tag_name']        
         query_feat = np.array(query_feat)
+        obj_te = time.time()
+        
+        feat_ts = time.time()        
         query_result,distance = self.searchfeature.queryContent(query_feat)
+        feat_te = time.time()        
+        
         # 选取
         max_index = self.selectByDistance(distance, self.contentThreshold)
         query_result = query_result[:max_index]
         distance = distance[:max_index]
-        return query_result,tag_name,distance
+
+        # TODO: 按照sceneid 去重
+        query_result_unique = set(query_result)
+        return query_result,tag_name,distance,feat_te-feat_ts,obj_te-obj_ts
 
         # print(result)
     def show_pics(self, results):
@@ -168,10 +173,10 @@ class MainSearch(BasicPart):
         
         return image_names
 
-    def searchKeywords(self, text, keepObjFormat=False):
+    def searchKeywords(self, text):
         """使用solr搜索关键词
         Returns:
-            result_dic:
+            result_json:
             {
                 keywords{string}, 
                 video_num{int}, 
@@ -182,117 +187,34 @@ class MainSearch(BasicPart):
         """
         v_num, v_list, s_num, s_list = self.solrobj.queryKeywords(text)
         # 创建略缩图
-        json_video_list = make_video_thumb(self.thumb_info, v_list)
-        if not keepObjFormat
-            json_scene_list = make_scene_thumb(self.thumb_info, s_list,False)
-        else:
-            # 转换为SceneInfo
-            json_scene_list = [SceneInfo(dic) for dic in s_list]
+        json_video_list = to_json_video(self.thumb_info, v_list)
+        json_scene_list = to_json_scene(self.thumb_info, s_list,False)
 
-        result_dic = {}
-        result_dic['keywords'] = text
-        result_dic['video_num'] = len(json_video_list)  
-        result_dic['video_list'] = json_video_list
+        result_json = {}
+        result_json['keywords'] = text
+        result_json['video_num'] = len(json_video_list)  
+        result_json['video_list'] = json_video_list
 
-        result_dic['scene_num'] = len(json_scene_list)  
-        result_dic['scene_list'] = json_scene_list
-        return result_dic
+        result_json['scene_num'] = len(json_scene_list)  
+        result_json['scene_list'] = json_scene_list
+        return result_json
 
-    def searchJoint(self, image, keywords):
+    def joinsearch(self, image, keywords):
         """图片文字联合搜索
         
         Arguments:
             image {string} -- 图片路径
             keywords {string} -- 关键词
-        Returns:
-            result_dic:
-            {
-                keywords{string}, 
-                face_scene_num{int},
-                face_scene_list{list[scene},
-                face_dist_list{list[double]},
-
-                content_scene_num{int},
-                content_scene_list{list[scene]},
-                content_dist_list{list[double]},
-
-                smart_scene_num{int},
-                smart_scene_list{list[scene]},
-
-                keywords_scene_num{int},
-                keywords_scene_list{list[scene]},
-
-                both_video_num{int}
-                both_scene_num{int}
-                both_scene_list{list[scene]}
-
-                personid,personname,personinfo
-                object_num,object_list
-
-            }
         """
-        keywords_scenes = self.searchKeywords(keywords, keepObjFormat=True)
+        keywords_json = self.searchKeywords(keywords)
         self.set_image(image)
-        image_scenes = self.searchImage(keepObjFormat=True)
-        # 结果综合方法:
-        # both&keyword, both|keyword, content, face
-        Kset = set(keywords_scenes['scene_list'])
-        Bset = set(image_scenes['both_scene_list'])
-        Cset = set(image_scenes['content_scene_list'])
-        Fset = set(image_scenes['face_scene_list'])
-
-        smart_scene_list = list(Kset & Bset)
-        smart_scene_list += list( (Kset | Bset) - (Kset & Bset) )
-        smart_scene_list += list(set(smart_scene_list) - Cset)
-        smart_scene_list += list(set(smart_scene_list) - Fset)
+        image_json = self.searchImage()
         
-        result_dic = image_scenes
-        result_dic['smart_scene_num'] = len(smart_scene_list)         
-        result_dic['smart_scene_list'] = make_scene_thumb(smart_scene_list)
 
-        result_dic['keywords_scene_num'] = len(keywords_scenes['scene_list'])         
-        result_dic['keywords_scene_list'] = make_scene_thumb(keywords_scenes['scene_list'])
-     
-        result_dic['face_scene_list'] = make_scene_thumb(result_dic['face_scene_list'])
-        result_dic['content_scene_list'] = make_scene_thumb(result_dic['content_scene_list'])
-        
-        result_dic['keywords'] = keywords_scenes['keywords']
-        return result_dic
-        
-    def smartsort(self, klist, blist, clist, flist, cdistance, fdistance):
-        """多来源结果智能排序
-        
-        Arguments:
-            klist {list} -- 关键词搜索结果
-            blist {list} -- content与face交集
-            clist {list} -- content搜索结果
-            flist {list} -- face搜索结果
-            cdistance {list} -- content搜索距离
-            fdistance {list} -- face搜索距离            
-        Returns:
-            list -- 智能排序结果
-        """
-        Kset = set(klist)
-        Bset = set(blist)
-        Cset = set(clist)
-        Fset = set(flist)
-        
-        smart_list = list(Kset & Bset)
-        smart_list += list(Kset | Bset)
-
-        # 对于剩余的content和face,按照距离排序
-        order_arg = np.argsort(cdistance+fdistance)
-        order_CandF = np.array(clist + flist)[order_arg]
-
-        smart_list += list(set(order_CandF) | set(smart_list))
-
-        
-        return smart_list
-
-    def searchImage(self, keepObjFormat=False):
+    def searchImage(self):
         """返回json格式的图片检索结果
         Returns:
-            result_dic:
+            result_json:
             {
                 keywords{string}, 
                 video_num{int}, 
@@ -315,79 +237,75 @@ class MainSearch(BasicPart):
             }
         TODO: 完成物体搜索结果
         """
-        # 由于relate加入,所以需要对返回结果进行处理
-        face_idlist, face_distance = self.search_face()
-        face_results, face_distance = self.get_face_to_video_sceneinfo(face_idlist,face_distance)
-
-        cont_idlist, object_list, cont_distance = self.search_pic()
-        cont_idlist = cont_idlist
-        cont_results,cont_distance = self.get_content_to_video_sceneinfo(cont_idlist,cont_distance)
-
-        result_dic = {}
-        # face
-        result_dic['face_scene_num'] = len(face_results)  
-        if not keepObjFormat:
-            result_dic['face_scene_list'] = make_scene_thumb(self.thumb_info, face_results)
-        else:
-            result_dic['face_scene_list'] = face_results
-        result_dic['face_dist_list'] = list(face_distance) 
+        fs = time.time()
+        face_idlist, face_distance = self.search_face()[:self.max_len]
+        face_results = self.get_face_to_video_sceneinfo(face_idlist)
+        self.lg('searchImage FACE:' + str(len(face_idlist)))
+        fe = time.time()
         
-        # content      
-        result_dic['content_scene_num'] = len(cont_results)  
-        if not keepObjFormat:
-            result_dic['content_scene_list'] = make_scene_thumb(self.thumb_info, cont_results)
-        else:
-            result_dic['content_scene_list'] = cont_results
-        result_dic['content_dist_list'] = list(cont_distance)       
+
+        cont_idlist, object_list, cont_distance,ft,ot = self.search_pic()
+        cont_idlist = cont_idlist[:self.max_len]
+        cont_results = self.get_content_to_video_sceneinfo(cont_idlist)
+        self.lg('searchImage CONT:' + str(len(cont_idlist)))
+
+
+        ts = time.time()
+        result_json = {}
+        result_json['face_scene_num'] = len(face_idlist)  
+        result_json['face_scene_list'] = to_json_scene(self.thumb_info, face_results)
+        result_json['face_dist_list'] = list(face_distance)       
+
+        result_json['content_scene_num'] = len(cont_idlist)  
+        result_json['content_scene_list'] = to_json_scene(self.thumb_info, cont_results)
+        result_json['content_dist_list'] = list(cont_distance)       
         
         # 交集
         fsids, fvids = extrace_ids(face_results)
         csids, cvids = extrace_ids(cont_results)
         both_scene_list = []
-        both_scene_list = set(face_results) & set(cont_results)
+        # both_scene_list = set(face_results) & set(cont_results)
         both_video_list = set(fvids) | set(cvids)
-        result_dic['both_video_num']  = len(both_video_list)
-        result_dic['both_scene_num']  = len(both_scene_list)
-        if not keepObjFormat:
-            result_dic['both_scene_list'] = make_scene_thumb(self.thumb_info, both_scene_list)
-        else:
-            result_dic['both_scene_list'] = both_scene_list
+        result_json['both_video_num']  = len(both_video_list)
+        result_json['both_scene_num']  = len(both_scene_list)
+        result_json['both_scene_list'] = to_json_scene(self.thumb_info, both_scene_list)
 
-        # 组织智能排序结果,
-        # both&keyword, both|keyword, content, face
-        Bset = set(both_scene_list)
-        Cset = set(image_scenes['content_scene_list'])
-        Fset = set(image_scenes['face_scene_list'])
+        te = time.time()     
 
-        smart_scene_list = list(Kset & Bset)
-        smart_scene_list += list( (Kset | Bset) - (Kset & Bset) )
-        smart_scene_list += list(set(smart_scene_list) - Cset)
-        smart_scene_list += list(set(smart_scene_list) - Fset)
-        
-        result_dic = image_scenes
-        result_dic['smart_scene_num'] = len(smart_scene_list)         
-        result_dic['smart_scene_list'] = make_scene_thumb(smart_scene_list)
-
+        ps = time.time()   
         # 识别人物
         pid, pname = self.personface.identify_pic_person(self.imagename)
         # 读取存储的人物简介
         pinfo = ''
         if pid != -1:
             pinfo = read_person_info(self.personinfo_dir, pid)
-        result_dic['personid'] = pid
-        result_dic['personname'] = pname
-        result_dic['personinfo'] = pinfo
-        
+        result_json['personid'] = pid
+        result_json['personname'] = pname
+        result_json['personinfo'] = pinfo
         # 物体集合
-        result_dic['object_num']  = len(object_list)
-        result_dic['object_list'] = object_list
-
-        return result_dic
+        result_json['object_num']  = len(object_list)
+        result_json['object_list'] = object_list
+        pe = time.time()
+        print("%.4f, %.4f, %.4f, %.4f,%.4f"%(fe-fs, ot, ft, pe-ts, pe-fs))
+        return result_json
 
 
 if __name__ == '__main__':  
     imagename="Data/Tmp/A/20170825.mp4.Scene-161-IN.jpg"
     ms = MainSearch(max_len = 100, isShow=False,logfile="tmp.log")
+    ms.set_image(imagename)
+    ms.searchImage()
+    print()
+    # ms.create_indexs('0701&0825&1220',['130','131','132'],True)
+    ms.setThreshold(800,800)
+    ms.load_index(['0701&0825&1220'],['Person'])
+    pic_list = ['Data/Tmp/A/','Data/Tmp/B/','Data/Tmp/C/']
+    for i, picdir in enumerate(pic_list):
+        pics = os.listdir(picdir)
+        for pic in pics:
+            # st = time.time()
+            ms.set_image(picdir+pic)
+            ms.searchImage()
     # print()
     #print(ms.searchKeywords("张德江"))
     

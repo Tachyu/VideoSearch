@@ -5,7 +5,11 @@
 *.h5
 *.weight
 *.weights
+*.ipynb
+*.log
+*.otf
 ObjectDetect/yad2k/weight/
+ObjectDetect/yad2k/font/
 Scene/2017.csv
 Scene/Videos/
 Scene/jt/
