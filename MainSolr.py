@@ -47,6 +47,7 @@ class MainSolr(BasicPart):
         self.v_collect = self.config.get('solr','collecttion_1')
         self.s_collect = self.config.get('solr','collecttion_2')   
         self.objdir = self.config.get('datadir','objects')  
+        self.max_result = self.config.getint('solr','max_result')  
     
     def __generate_solrdata(self, dic_data):
         data      = {}
@@ -63,18 +64,11 @@ class MainSolr(BasicPart):
         r = requests.post(url, json = data, params = params, headers = headers)
         return r
 
-    def __read_objs(self, videoid=-1):
+    def __read_objs(self, videoid):
         """读物体文件，返回物体数据列表
         """
         obj_files = []
-        dirs = os.listdir(self.objdir)
-        for d in dirs:
-            if os.path.splitext(d)[1] == '.pkl':
-                if videoid == -1:
-                    obj_files.append(d)
-                else:
-                    if d.find(str(videoid)) == -1:
-                        obj_files.append(d)
+        obj_files.append('%d_ob.pkl'%videoid)
         self.lg("Load %d files from %s"%(len(obj_files), self.objdir))
         
         obj_data_list = []
@@ -100,7 +94,7 @@ class MainSolr(BasicPart):
         r = self.__post_to_solr(self.v_collect, data)
         # print(r.text)
 
-    def addScene(self, videoid = -1):
+    def addScene(self, videoid):
         # 查询数据库，并读取本地obj文件
         # 1. 首先获取所有物体信息
 
@@ -123,8 +117,8 @@ class MainSolr(BasicPart):
         #
 
     def __query(self, collection, keywords):
-        args = (self.address, self.port, collection,keywords)
-        url_video = '''http://%s:%s/solr/%s/select?q=%s&wt=json&indent=true'''%args
+        args = (self.address, self.port, collection,keywords, self.max_result)
+        url_video = '''http://%s:%s/solr/%s/select?q=%s&wt=json&indent=true&rows=%d'''%args
         # print(url_video)
         r = requests.get(url_video, verify = False)
         r = r.json()
@@ -146,10 +140,24 @@ class MainSolr(BasicPart):
         v_num, v_list = self.__query(self.v_collect,keywords)
         s_num, s_list = self.__query(self.s_collect,keywords)
         return v_num, v_list, s_num, s_list
+    
+    def addManySceneAndVideo(self, idlist):
+        for id in idlist:
+            self.addVideo(id)
+            self.addScene(id)
+            
+
         
 if __name__ == '__main__':  
     ms = MainSolr(isShow=True)
-    # ms.addVideo(122)    
-    ms.addScene(122)
-    # print(ms.queryKeywords("人 AND 电视机"))
+    # idlist = [i for i in range(1,13,1)]
+    # print(idlist)
+    # ms.addManySceneAndVideo(idlist)
+    # ms.addVideo(130)    
+    # ms.addScene(130)
+    # ms.addVideo(131)    
+    # ms.addScene(131)
+    # ms.addVideo(132)    
+    # ms.addScene(132)
+    print(ms.queryKeywords("习近平"))
         

@@ -3,6 +3,8 @@
 """
 import os, requests, json, subprocess,threading
 import numpy as np
+from copy import deepcopy
+# 深拷贝
 
 class MyEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -21,8 +23,8 @@ def mkthumb(thumb_size, timestamp, full_videoname, image_name):
     cmd = '''
         ffmpeg -ss %d -i %s -y -f image2 -vframes 1 -s %s %s
         '''%(timestamp,full_videoname,thumb_size,image_name)
-    threading.Thread(target=subprocess.getoutput, args=(cmd))
-    # a = subprocess.getoutput(cmd)
+    # threading.Thread(target=subprocess.getoutput, args=(cmd))
+    a = subprocess.getoutput(cmd)
 
 
 def make_video_thumb(thumb_info,result_list):
@@ -41,10 +43,9 @@ def make_video_thumb(thumb_info,result_list):
     json_list = []
     # 1. 转换文件名到路径，2.同时生成略缩图：400*300
     for index, cpdic in enumerate(result_list):
-        videopath = cpdic['videoname']
-        video_name = videopath.split('/')[-1]
-        cpdic['videoname'] = video_name
-        cpdic['videopath'] = videopath
+        cpdic = deepcopy(cpdic)
+        cpdic['videopath'] = cpdic['videoname']
+        cpdic['videoname'] = cpdic['videopath'].split('/')[-1]
 
         # 截图
         thumb_name = cpdic['videoname'].split(".")[0] +"_v_" +".jpg"
@@ -81,13 +82,12 @@ def make_scene_thumb(thumb_info, result_list, isObj=True):
     # 同时查询到当前场景的人物,物体
     for index, re in enumerate(result_list):
         if isObj:
-            cpdic = re.dic
+            cpdic = deepcopy(re.dic)
         else:
-            cpdic = re
-        videopath = cpdic['videoname']
-        video_name = videopath.split('/')[-1]
-        cpdic['videoname'] = video_name
-        cpdic['videopath'] = videopath
+            cpdic = deepcopy(re)
+        cpdic['videopath'] = cpdic['videoname']
+        cpdic['videoname'] = cpdic['videopath'].split('/')[-1]
+
         # print(str(index) +" " +videopath)
 
         # 截图
@@ -137,12 +137,27 @@ def saveDisJson(distance, ud, dis_type):
     with open('/var/www/html/SiteVideo/'+f_name,'w',encoding='utf8') as f:
         f.write(str(dis_withid))
 
-def genPoint(name, size, category):
+def genPoint(name, size, category, color, fontsize, fixed=False, x=0, y=0,):
     point_dic = {}
     point_dic['name'] = name
     point_dic['symbolSize'] = size
-    point_dic['category'] = category
-    point_dic['draggable'] = "true"
+    if category != '':
+        point_dic['category'] = category
+    
+    if color != '':
+        itemstyle = {}
+        itemstyle['color'] = color
+        point_dic['itemStyle'] = itemstyle
+        
+    label = {}
+    label['fontSize'] = fontsize
+    point_dic['label'] = label
+    point_dic['draggable'] = not fixed
+    if fixed:
+        point_dic['fixed'] = True
+        point_dic['x'] = x
+        point_dic['y'] = y        
+        
     return point_dic
 
 def genEdge(source, target):
@@ -151,32 +166,59 @@ def genEdge(source, target):
     edge_dic['target'] = target
     return edge_dic
 
-def generateRelationJson(ud, result_dic):
+def generateRelationJson(ud, result_dic, haskeywords=False):
     point_list = []
     edge_list  = []  
     name_list = []
-    point_list.append(genPoint('结果',20,'结果'))
-    point_list.append(genPoint('图像',10,'图像'))   
-    point_list.append(genPoint('人脸',10,'人脸'))  
-    edge_list.append(genEdge('结果', '图像'))
-    edge_list.append(genEdge('结果', '人脸')) 
-       
-    for face_scene in result_dic['face_scene_list']:
-        pname = str(hex(face_scene['sceneid']))[2:]
-        point_list.append(genPoint(pname,1,'人脸'))
-        edge_list.append(genEdge('人脸', pname))
-    
-    for both_scene in result_dic['both_scene_list']:
-        pname = str(hex(both_scene['sceneid']))[2:]
-        name_list.append(pname)        
+    colors = ['#FFAB40', '#4CAF50','#C0CA33', '#EF5350']
+    if 'content_scene_list' in result_dic.keys():      
+        point_list.append(genPoint('图像',40,'图像', '', 30, True, 300, 500))
 
-    name_set = set(name_list)
-    for content_scene in result_dic['content_scene_list']:
-        pname = str(hex(content_scene['sceneid']))[2:]
+    if 'face_scene_list' in result_dic.keys():
+        point_list.append(genPoint('人脸',40,'人脸', '', 30, True, 760, 500)) 
+
+    if 'keywords_scene_list' in result_dic.keys():
+        point_list.append(genPoint('关键词',40,'关键词', '', 30, True, 530, 100))  
+
+    if len(point_list) == 1:
+       point_list[0]['x'] = 600
+       point_list[0]['y'] = 300     
+    elif len(point_list) == 2:
+       point_list[0]['x'] = 400
+       point_list[0]['y'] = 300 
+       point_list[1]['x'] = 800
+       point_list[1]['y'] = 300 
+
+    name_set = set()
+    for scene in result_dic['both_scene_list']:
+        pname = str(scene['sceneid']) 
+        if pname not in name_set:
+            point_list.append(genPoint(pname, 5,'', colors[1], 10))             
+            name_set.add(pname)        
+
+    for scene in result_dic['face_scene_list']:
+        # pname = str(hex(face_scene['sceneid']))[2:]
+        pname = str(scene['sceneid'])  
         if pname not in name_set:    
-            point_list.append(genPoint(pname,1,'图像'))
-        edge_list.append(genEdge('图像', pname))
+            point_list.append(genPoint(pname, 5,'人脸', '' ,10))
+            name_set.add(pname)
+        edge_list.append(genEdge('人脸', pname))
 
+    for scene in result_dic['content_scene_list']:
+        pname = str(scene['sceneid'])    
+        if pname not in name_set:    
+            point_list.append(genPoint(pname, 5,'图像', '',10))
+            name_set.add(pname) 
+        edge_list.append(genEdge('图像', pname))
+    
+    if haskeywords: 
+        for scene in result_dic['keywords_scene_list']:
+            pname = str(scene['sceneid'])
+            if pname not in name_set:    
+                point_list.append(genPoint(pname, 5,'关键词', '',10))
+                name_set.add(pname)               
+            edge_list.append(genEdge('关键词', pname))
+    
     relation_data = {}
     relation_data['data'] = point_list
     relation_data['edge'] = edge_list

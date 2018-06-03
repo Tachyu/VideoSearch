@@ -158,10 +158,10 @@ class PersonFace(BasicPart):
 if __name__ == '__main__':
     from FeatureIndex import FeatureIndex
     pf = PersonFace(True)
-    fi = FeatureIndex(True, person_index_prefixs=["Person"])
+    fi = FeatureIndex(True)
     fi.load_person_index()
     pf.setFeatureIndex(fi)
-    pid, name = pf.identify_pic_person('/var/www/html/SiteVideo/upload/cap_20171031_001213_01.jpg')
+    pid, name = pf.identify_pic_person('Data/Tmp/t1.jpg')
     print(pid)
     print(name)    
     # PersonFace(isShow=True).index_person(person_list=["赵乐际","汪洋","栗战书","俞正声"],prefix="Person2")

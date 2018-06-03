@@ -47,7 +47,6 @@ class MainReader(BasicPart):
         self.videoinfo = videoinfo
         self.__mkdirs()
         self.dbhandler = DBHandler()
-        self.save_video()
         self.item_list = []
         # 人物识别
         self.pf = PersonFace(True)
@@ -57,6 +56,7 @@ class MainReader(BasicPart):
         self.savepic=savepic
         # solr
         self.solrhandler = MainSolr(logfile, isShow)
+        self.save_video()
         pass
 
     def read_config(self):
@@ -122,35 +122,36 @@ class MainReader(BasicPart):
         current_pic_index = 0  
         for i in range(size):
             item =  self.item_list[i]
-            if item['id'] != item['relate_id']:
-                continue
-            cur_face_num   = len(item['face_result']['feats'])
-            if cur_face_num == 0:
+            if self.need_process(item):
+                cur_face_num   = len(item['face_result']['feats'])
+                if cur_face_num == 0:
+                    current_pic_index += 1 
+                    continue
+                cur_pic_id   = self.db_picid_list[current_pic_index]            
+                cur_pic_list = [cur_pic_id] * cur_face_num
+                # cur_person_ids = [None] * cur_face_num              
+                
+                # 识别人脸到人物
+                personids = []
+                for feat in item['face_result']['feats']:
+                    personid,_ = self.pf.idenity(feat)
+                    # if personid != -1:
+                        # print("PERSONID="+str(personid))
+                    personids.append(personid)
+
+                # 提交数据库   
+                # print(personids)
+                cur_db_faceid = self.dbhandler.addmanyFaceFeats(cur_pic_list, personids)
+                faces_num += cur_face_num
+
+                for index, feat in enumerate(item['face_result']['feats']):
+                    ff_dic = {}
+                    ff_dic['ffid'] = cur_db_faceid[index]
+                    ff_dic['feat'] = feat
+                    # 存储到特征列表
+                    face_feat_dic_list.append(ff_dic)
+                # 最后
                 current_pic_index += 1 
-                continue
-            cur_pic_id   = self.db_picid_list[current_pic_index]            
-            cur_pic_list = [cur_pic_id] * cur_face_num
-            # cur_person_ids = [None] * cur_face_num              
-            
-            # 识别人脸到人物
-            personids = []
-            for feat in item['face_result']['feats']:
-                personid,_ = self.pf.idenity(feat)
-                personids.append(personid)
-
-            # 提交数据库   
-            # print(personids)
-            cur_db_faceid = self.dbhandler.addmanyFaceFeats(cur_pic_list, personids)
-            faces_num += cur_face_num
-
-            for index, feat in enumerate(item['face_result']['feats']):
-                ff_dic = {}
-                ff_dic['ffid'] = cur_db_faceid[index]
-                ff_dic['feat'] = feat
-                # 存储到特征列表
-                face_feat_dic_list.append(ff_dic)
-            # 最后
-            current_pic_index += 1 
 
         # 保存特征文件
         self.__store_feat(self.dir['faces_feat'], 'ff', face_feat_dic_list)    
@@ -175,25 +176,31 @@ class MainReader(BasicPart):
         save_count = 0                                      
         for item in self.item_list:
             cur_scene_id  = self.db_scene_id[item['id']]
-            cur_relate_scene_id = self.db_scene_id[item['relate_id']]
-            if item['id'] != item['relate_id']:
-                # 该item无feat,跳过
-                # self.lg("IGNORE :"+str(item['id']))   
-                ignore_count += 1             
-                relate_scene_list.append(cur_relate_scene_id)
-                id_scene_list.append(cur_scene_id)                
-                pass
+            if 'relate_id' in item.keys():
+                cur_relate_scene_id = self.db_scene_id[item['relate_id']]
+                if item['id'] != item['relate_id']:
+                    # 该item无feat,跳过
+                    # self.lg("IGNORE :"+str(item['id']))   
+                    ignore_count += 1             
+                    relate_scene_list.append(cur_relate_scene_id)
+                    id_scene_list.append(cur_scene_id)                
+                    pass
+                else:
+                    save_count += 1
+                    pic_scene_list.append(cur_scene_id)
+                    pic_feat_list.append(item['image_obj_dic']['feat'])
             else:
                 save_count += 1
                 pic_scene_list.append(cur_scene_id)
                 pic_feat_list.append(item['image_obj_dic']['feat'])
                           
         # 提交数据库
-        print(len(pic_scene_list))
+        # print(len(pic_scene_list))
         self.db_picid_list = self.dbhandler.addmanyPicFeats(pic_scene_list)
         
         # relatescene
-        _ = self.dbhandler.addmanyRelateScene(relate_scene_list, id_scene_list)
+        if len(relate_scene_list) != 0:
+            self.dbhandler.addmanyRelateScene(relate_scene_list, id_scene_list)
         
         # 可以处理其他信息了
         self.db_picid_lock.release()
@@ -221,9 +228,7 @@ class MainReader(BasicPart):
         current_pic_index = 0
         for i in range(size):
             item = self.item_list[i]
-            if item['id'] != item['relate_id']:
-                continue
-            else:
+            if self.need_process(item):
                 cur_pic_id  = self.db_picid_list[current_pic_index]
                 obj_dic = {}
                 obj_dic['picid'] = cur_pic_id
@@ -310,7 +315,7 @@ class MainReader(BasicPart):
         self.lg("[OVER]  Store procedure.")        
         self.dbhandler.commit()
         self.lg("[START] Solr procedure.")        
-        # self.uploadsolr()
+        self.uploadsolr()
         self.lg("[OVER]  Solr procedure.")        
         
         
@@ -323,16 +328,31 @@ class MainReader(BasicPart):
 if __name__ == "__main__":
     # main("Data/Videos/20170701_small.mp4",isShow=False).start()
     videoinfo = {}
-    date = '20171220'
-    # date = '20170825'
-    # date = '20170701'
+    date = '20170108'    
+    date = '20170303'
+    date = '20170620'
+    date = '20170701' 
+    date = '20170825' 
+    date = '20170902' 
+    date = '20171028' 
+    date = '20171030'  
+    date = '20171031'  
+    date = '20171103' 
+    date = '20171215'      
+    date = '20171220'            
+
     
-    # date = '20171215'
+    # date = 'persont'
+    
     
     videoinfo['name'] = "Data/Videos/%s.mp4"%date
     # des = ''
-    with open('Data/Videos/Descriptions/%s.txt'%date,'r') as df:
-        des = df.read()
+    des_filename = 'Data/Videos/Descriptions/%s.txt'%date
+    des = ''
+    if os.path.exists(des_filename):
+        with open('Data/Videos/Descriptions/%s.txt'%date,'r') as df:
+            des = df.read()
+
     videoinfo['descrption'] = des
     MainReader(videoinfo,isShow=True,savepic=True).start()
     

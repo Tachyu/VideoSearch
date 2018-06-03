@@ -52,6 +52,14 @@ class BasicPart:
         if self.isShow:
             logging.info(self.__class__.__name__+ ": "+infomation)
 
+    def need_process(self, item):
+        if 'relate_id' not in item.keys():
+            return True
+        elif item['id'] == item['relate_id']:
+            return True
+        else:
+            return False
+
     def process_thread(self):
         logging.info(self.__class__.__name__+ ": process_thread START")                
         isProcessOver = False

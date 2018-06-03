@@ -15,20 +15,26 @@ import time
 from PublicTool import *
 
 face_thresh = 600
-cont_thresh = 600
+cont_thresh = 600   #nmslib
+
+face_thresh = 686
+cont_thresh = 152222 #faiss
+
+face_thresh = 800 #hnsw
+cont_thresh = 900 #faiss
+
 prefix = '/var/www/html/SiteVideo/upload/'
 web_prefix = 'upload/'   
 
 g = tf.Graph()
 with g.as_default():
     ms = MainSearch(max_len = 120, isShow=True)
-    ms.load_index(['0701&0825&1220'],['Person'])
+    ms.load_index(['all'],['Person'])
 
     # 测试图片
     ms.lg("**********test**********")
     ms.setThreshold(0,0)    
-    ms.set_image("x.jpg")
-    result_dic = ms.searchImage()
+    result_dic = ms.searchImage("x.jpg")
     print('Ready Let`s GO!')
 
 app = Flask(__name__)
@@ -37,6 +43,7 @@ def savepicture(picdata):
     pic_name = secure_filename(picdata.filename)
     img_path = os.path.join(prefix,pic_name)
     picdata.save(img_path)
+    locale_path = img_path
     upload_path = web_prefix + pic_name
     return locale_path,upload_path
 
@@ -62,7 +69,11 @@ def writetojson(dic_obj):
         saveDisJson(dic_obj['face_dist_list'], ud, 'face')
     if 'content_dist_list' in dic_obj.keys():      
         saveDisJson(dic_obj['content_dist_list'], ud, 'content')
-    generateRelationJson(ud, dic_obj)
+    if 'keywords_scene_list' in dic_obj.keys():
+        generateRelationJson(ud, dic_obj, True)
+    elif 'content_dist_list' in dic_obj.keys() and 'face_dist_list' in dic_obj.keys():
+        generateRelationJson(ud, dic_obj, False)
+        
     return ud, message
 
 
@@ -75,8 +86,7 @@ def uploadpic():
     # img_path = "Data/Tmp/A/20171220.mp4.Scene-024-IN.jpg"
     with g.as_default():
         ms.setThreshold(face_thresh, cont_thresh)
-        ms.set_image(locale_path)
-        result_dic = ms.searchImage()
+        result_dic = ms.searchImage(locale_path)
         
     time_stop=time.time()
     
@@ -101,7 +111,8 @@ def search():
 @app.route('/jointsearch', methods=['POST'])
 def jointsearch():
     time_start=time.time();
-    keywords = request.form['keywords']    
+    keywords = request.form['keywords']  
+    picdata = request.files['file']
     locale_path, upload_path = savepicture(picdata)
 
     with g.as_default():

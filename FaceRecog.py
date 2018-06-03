@@ -129,7 +129,7 @@ class FaceRecog(BasicPart):
                     name = str(item['id']) + "_OUT"
                 item['name'] = name
             # 缩减模块
-            if item['id'] == item['relate_id']:
+            if self.need_process(item):
                 result = self.__Recognation(item['name'], item['data'])
                 item['face_result'] = result
             # 加入处理结果队列            

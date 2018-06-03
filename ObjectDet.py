@@ -283,7 +283,7 @@ class ObjectDet(BasicPart):
                     name = str(item['id']) + "_OUT"
                 item['name'] = name
             # 缩减模块
-            if item['id'] == item['relate_id']:
+            if self.need_process(item):
                 image_obj_dic = self.__Detection(item['name'], item['data'])
                 # 加入处理结果队列
                 item['image_obj_dic'] = image_obj_dic

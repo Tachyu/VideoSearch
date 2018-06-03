@@ -15,7 +15,15 @@ import time
 app = Flask(__name__)
 face_thresh = 400
 cont_thresh = 400
+prefix = '/var/www/html/SiteVideo/upload/'
+web_prefix = 'upload/' 
 
+def savepicture(picdata):
+    pic_name = secure_filename(picdata.filename)
+    img_path = os.path.join(prefix,pic_name)
+    picdata.save(img_path)
+    upload_path = web_prefix + pic_name
+    return locale_path,upload_path
 
 @app.route('/')
 def hello_world():
@@ -89,6 +97,24 @@ def uploadpic():
     # print("RETURE RESPONSE")
     return response_to(message,False)
 
+@app.route('/jointsearch', methods=['POST'])
+def jointsearch():
+    time_start=time.time();
+    keywords = request.form['keywords']  
+    print(keywords)
+    # print(request.form.get('file',None))
+    # print(request.files.get('file',None))
+    picdata = request.files['file']
+    # picdata  = request.form['picture']
+    # print(picdata)
+
+    time_stop=time.time()
+    result_dic = {}
+
+
+    # ud, message = writetojson(result_dic)
+    return response_to(None,False)
+
 @app.route('/setthresh', methods=['POST'])
 def setthresh():
     face_thresh = request.form['face_thresh']
@@ -105,7 +131,6 @@ def search():
     message = {}
     message['jsname'] = 'OK'
     return response_to(message, False)
-
 
 if __name__ == '__main__':   
     server = wsgi.WSGIServer(('0.0.0.0', 5000), app)

@@ -29,9 +29,11 @@ class SceneMerge(BasicPart):
         # 总item数
         self.sum_count = 0
         # 向前追溯最远距离
-        self.maxdistance  = 10    
+        self.maxdistance  = 8 
+   
     def read_config(self):
-        self.threshold        = self.config.getint('sample', 'threshold')  + 5
+        # 聚类阈值小于场景分割阈值
+        self.threshold        = self.config.getint('scenemerge', 'threshold')
     
     def calculate_delta(self, hsv_a, hsv_b):
         diff = hsv_a.astype(np.int32) - hsv_b.astype(np.int32)       
@@ -46,6 +48,7 @@ class SceneMerge(BasicPart):
         delta = self.calculate_delta(item_a['hsv'],item_b['hsv'])
         # print(delta)
         if delta < self.threshold:
+            # print("MERGEDELTA:      "+str(delta))
             return True, delta
         else:
             return False, delta
